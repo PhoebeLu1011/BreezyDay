@@ -4,7 +4,7 @@
 
 ### |　Motivation
 
-As whom often suffer from allergies, this webs aims to 
+As someone who often suffers from allergies, this website aims to provide daily weather and air quality insights to help users prepare suitable outfits and minimize allergic reactions.
 
 ### |　System Architecture Overview
 
@@ -15,6 +15,7 @@ The system includes four modules:  Dashboard, Allergy Index, Weather Forecast, a
 Each module retrieves specific data through the API Gateway, which connects to the Central Weather Administration and Taiwan EPA AQI Open Data APIs.
 
 The Dashboard then integrates all the information to provide users with a comprehensive overview of weather and allergy conditions.
+
 
 ### | 第一次提案記錄
 1. 加入gemini(prompt json匯入 (其實有點想寫ai agent再看看))) 那感覺生成穿搭建議那邊就會使用到gemini會比較好
