@@ -18,8 +18,8 @@ The Dashboard then integrates all the information to provide users with a compre
 
 
 ### | 第一次提案記錄
-1. 加入gemini(prompt json匯入 (其實有點想寫ai agent再看看))) 那感覺生成穿搭建議那邊就會使用到gemini會比較好
-2. 部署Render
+1. 加入gemini ai model(prompt json匯入)) 那感覺生成穿搭建議那邊就會使用到gemini會比較好
+2. 部署Render(再說)
 3. database(我自己比較喜歡用mongodb)
 database要幹嘛:
 - 登入登出系統
