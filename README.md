@@ -20,6 +20,8 @@ npm install
 # 啟動開發伺服器
 npm run dev
 ```
+前端預設在 http://localhost:5173
+
 ### Backend
 ```
 # 進入後端資料夾
