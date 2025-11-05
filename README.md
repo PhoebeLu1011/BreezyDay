@@ -2,6 +2,53 @@
 
 "Breezy Day" is a website designed for people who frequently experience allergies.
 
+## | How to run
+### Prerequisites
+- Node.js 18+  
+- npm (or yarn)
+- MongoDB Atlas account (URI already configured in `.env`)
+
+---
+### Frontend(React+Vite)
+```cmd
+# 進入前端資料夾
+cd breezy_day
+
+# 安裝依賴
+npm install
+
+# 啟動開發伺服器
+npm run dev
+```
+### Backend
+```
+# 進入後端資料夾
+cd breezy_day/server
+
+# 安裝依賴
+npm install
+
+# 建立環境變數檔 .env
+
+
+```
+`.env`:
+
+```env
+MONGO_URI=mongodb+srv://breezyday_user:<password>@cluster0.xxxxxx.mongodb.net/breezyday
+JWT_SECRET=change_this_secret
+PORT=5000
+```
+
+啟動:
+
+```cmd
+# 啟動後端伺服器 (自動偵測修改)
+npm run dev
+```
+
+後端預設在 http://localhost:5000
+
 ### |　Motivation
 
 As someone who often suffers from allergies, this website aims to provide daily weather and air quality insights to help users prepare suitable outfits and minimize allergic reactions.
