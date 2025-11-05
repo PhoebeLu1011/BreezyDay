@@ -1,0 +1,91 @@
+/* 全域樣式 reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html, #root {
+  height: 100%;
+  font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #e3f2fd, #f1f8e9);
+}
+
+/* 背景圖層與特效 */
+.landing-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: repeating-linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px,
+      transparent 80px
+    ),
+    linear-gradient(135deg, #bcd2e8, #a9c1d9);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 模擬小氣泡 */
+.landing-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  background-image: radial-gradient(
+      rgba(255, 255, 255, 0.2) 1px,
+      transparent 1px
+    );
+  background-size: 60px 60px;
+  animation: float 60s linear infinite;
+  opacity: 0.4;
+}
+
+@keyframes float {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(-100px, -100px);
+  }
+}
+
+/* 文字內容 */
+.content {
+  text-align: center;
+  z-index: 2;
+}
+
+.title {
+  font-size: 3rem;
+  color: #345b80;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #4f6d8c;
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+/* 按鈕設計 */
+.enter-btn {
+  background-color: #345b80;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.enter-btn:hover {
+  background-color: #456e9c;
+  transform: translateY(-2px);
+}
