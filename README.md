@@ -47,6 +47,8 @@ PORT=5000
 ```cmd
 # 啟動後端伺服器 (自動偵測修改)
 npm run dev
+node server.js
+(兩個應該都可以跑)
 ```
 
 後端預設在 http://localhost:5000
