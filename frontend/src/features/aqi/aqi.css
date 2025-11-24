@@ -1,0 +1,611 @@
+:root {
+    font-family: "Noto Sans TC", "PingFang TC", sans-serif;
+    color: #1f2a44;
+}
+body {
+    margin: 0;
+    padding: 24px;
+    /* 整個背景藍色漸層 */
+    background: linear-gradient(180deg,#c8dcff 0%,#dde7ff 40%,#eef3ff 100%);
+    min-height: 100vh;
+}
+
+/* 整體寬度限制 */
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* === 上半部 Hero & Dashboard === */
+.top-section {
+    text-align: center;
+    padding: 24px 0 10px 0;
+}
+.main-title {
+    font-size: 32px;
+    margin: 0;
+    font-weight: 700;
+}
+.sub-title {
+    margin-top: 6px;
+    color: #6e7b8d;
+}
+
+.city-controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.btn {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-primary {
+    background: #1f2a44;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+.btn-secondary {
+    background: #ffffff;
+    color: #1f2a44;
+    border: 1px solid #c9d4e2;
+}
+.city-tag {
+    padding: 8px 16px;
+    background: #ffffff;
+    border-radius: 999px;
+    border: 1px solid #d5deee;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 主 AQI 卡片 */
+.aqi-main-card {
+    max-width: 760px;
+    margin: 28px auto 0 auto;
+    background: #f8fbff;
+    border-radius: 24px;
+    padding: 24px 24px 20px 24px;
+    box-shadow: 0 12px 28px rgba(15, 33, 98, 0.16);
+    text-align: left;
+}
+.aqi-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.aqi-header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: #e2ebff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.aqi-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+.aqi-header p {
+    margin: 3px 0 0 0;
+    color: #7c889b;
+    font-size: 13px;
+}
+
+.aqi-main-body {
+    margin-top: 16px;
+}
+.main-location {
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #49556b;
+}
+
+.aqi-main-row {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+}
+.aqi-box {
+    background: #f4a521;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 16px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 90px;
+}
+.aqi-box-label {
+    font-size: 12px;
+}
+.aqi-box-value {
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.level-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.level-desc {
+    color: #6e7b8d;
+    font-size: 13px;
+}
+.level-status {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* AQI 等級顏色 */
+.level-good        { color:#2e8b57; }
+.level-moderate    { color:#e0a02b; }
+.level-usg         { color:#d67327; }
+.level-unhealthy   { color:#d6453a; }
+.level-very        { color:#a1266b; }
+.level-hazardous   { color:#7b0022; }
+
+/* 進度條 */
+.aqi-bar {
+    margin-top: 14px;
+    width: 100%;
+}
+.bar-track {
+    width: 100%;
+    height: 10px;
+    background: #e2e5f1;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg,#f2b544,#f48a3c);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+.bar-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    color: #6e7b8d;
+    font-size: 12px;
+}
+
+/* === AQI Scale + 下拉式選單 === */
+.aqi-scale-wrapper {
+    max-width: 760px;
+    margin: 18px auto 0 auto;
+    background: #f6f8ff;
+    border-radius: 20px;
+    padding: 14px 18px 16px 18px;
+    box-shadow: 0 8px 18px rgba(15, 33, 98, 0.08);
+}
+.aqi-scale-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.aqi-scale-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+.aqi-scale-filter label {
+    font-size: 13px;
+    color: #4d5870;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.aqi-scale-filter select {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #ccd4e0;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+}
+.aqi-scale-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+}
+.aqi-scale-card {
+    flex: 1 1 130px;
+    border-radius: 14px;
+    padding: 10px 10px 12px 10px;
+    text-align: center;
+    font-size: 13px;
+    min-width: 120px;
+}
+.aqi-scale-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    margin: 0 auto 6px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    background: rgba(255,255,255,0.85);
+}
+.aqi-scale-label {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.aqi-scale-range {
+    font-size: 12px;
+}
+
+/* 各卡片背景色 */
+.aqi-scale-good       { background:#e9f9f0; color:#2e8b57; }
+.aqi-scale-moderate   { background:#fff7e5; color:#c38207; }
+.aqi-scale-usg        { background:#ffe9de; color:#d05919; }
+.aqi-scale-unhealthy  { background:#ffe4e4; color:#c8332f; }
+.aqi-scale-very       { background:#f5e8ff; color:#8a2fb7; }
+.aqi-scale-hazardous  { background:#ffe3f0; color:#7b0022; }
+
+/* 多城市卡片區 */
+.city-cards {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+.city-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 12px 16px;
+    min-width: 180px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    position: relative;
+}
+.city-card-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.city-card-aqi {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 6px;
+}
+.city-card-aqi-value {
+    font-size: 22px;
+    font-weight: 700;
+}
+.city-card-aqi-label {
+    font-size: 12px;
+    color: #6e7b8d;
+}
+.city-card-remove {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #a0a7b7;
+    font-size: 14px;
+}
+
+/* === 下方篩選 + 表格 === */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 32px;
+}
+h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 0.5px;
+}
+#controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+input,
+select,
+button {
+    padding: 8px 10px;
+    border: 1px solid #ccd4e0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+input {
+    cursor: text;
+}
+.btn-table {
+    background: #1f73f1;
+    color: white;
+    border: none;
+}
+.btn-table.secondary {
+    background: #f3f6fb;
+    color: #1f2a44;
+    border: 1px solid #ccd4e0;
+}
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+table {
+    width: 100%;
+    margin-top: 16px;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(17, 38, 146, 0.08);
+}
+th,
+td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #eef1f6;
+    font-size: 14px;
+}
+th {
+    background: #e9f2ff;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+tr:hover {
+    background: #f7fbff;
+}
+.pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: white;
+    min-width: 40px;
+    text-align: center;
+}
+.pill.g { background:#3cb371; }
+.pill.m { background:#f5a623; }
+.pill.u { background:#e94f37; }
+
+#status {
+    margin-top: 8px;
+    color: #4a5a72;
+    font-size: 13px;
+}
+    /* 按鈕 */
+.aqi-toggle-btn {
+margin: 12px 0;
+padding: 8px 12px;
+border-radius: 6px;
+border: none;
+background: #1f75fe;
+color: white;
+cursor: pointer;
+font-size: 16px;
+}
+
+/* 外層容器：預設收起 */
+.aqi-scale-container {
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.4s ease;
+}
+
+/* 展開狀態 */
+.aqi-scale-container.open {
+max-height: 500px; /* 足夠放內容即可 */
+}
+.section-title-row {
+display: flex;
+align-items: center;
+justify-content: flex-start;
+margin-bottom: 12px;
+}
+
+.section-title {
+font-size: 18px;
+font-weight: 600;
+color: #1f2a44;
+}
+
+.pollutant-grid {
+display: grid;
+gap: 16px;
+grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* 卡片基底 */
+.pollutant-card {
+background: #fff;
+border-radius: 14px;
+padding: 18px 18px 16px;
+box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+}
+
+/* 不同底色（類似圖上的淡黃、淡綠） */
+.card-yellow {
+background: #fff7ea;
+}
+
+.card-green {
+background: #eafaf2;
+}
+
+/* header：左邊文字 + 右邊 badge */
+.pollutant-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+margin-bottom: 12px;
+}
+
+.pollutant-name {
+font-size: 16px;
+font-weight: 600;
+color: #1f2a44;
+}
+
+.pollutant-subtitle {
+font-size: 13px;
+color: #6b7280;
+}
+
+/* badge（Good / Moderate） */
+.pollutant-badge {
+padding: 4px 10px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 500;
+}
+
+.badge-good {
+background: #e2f8eb;
+color: #15803d;
+}
+
+.badge-moderate {
+background: #fff3e0;
+color: #c05621;
+}
+
+/* 數值列 */
+.pollutant-value-row {
+display: flex;
+align-items: baseline;
+gap: 4px;
+margin-bottom: 10px;
+}
+
+.pollutant-value {
+font-size: 28px;
+font-weight: 600;
+color: #1f2a44;
+}
+
+.pollutant-unit {
+font-size: 13px;
+color: #6b7280;
+}
+
+/* 進度條 */
+.pollutant-bar {
+position: relative;
+width: 100%;
+height: 6px;
+border-radius: 999px;
+background: #f3f4f6;
+overflow: hidden;
+margin-bottom: 6px;
+}
+
+.pollutant-bar-inner {
+height: 100%;
+border-radius: inherit;
+}
+
+.bar-yellow {
+background: #d98c1f;
+}
+
+.bar-green {
+background: #16a34a;
+}
+
+/* 下方刻度 + Standard 字 */
+.pollutant-scale-row {
+display: flex;
+justify-content: space-between;
+font-size: 11px;
+color: #9ca3af;
+margin-bottom: 8px;
+}
+
+.pollutant-standard {
+text-align: right;
+}
+
+/* 描述文字 */
+.pollutant-desc {
+margin: 0;
+font-size: 12px;
+color: #6b7280;
+}
+
+/* 表格 */
+.chart-section {
+background: #f4f7fc;
+padding: 20px;
+border-radius: 18px;
+box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+margin-top: 20px;
+}
+
+.pollutant-chart {
+width: 100%;
+height: 350px;
+}
+
+.chart-legend {
+display: flex;
+justify-content: space-evenly;
+margin-top: 18px;
+}
+
+.legend-item {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.dot {
+width: 14px;
+height: 14px;
+border-radius: 50%;
+}
+
+.legend-text div {
+font-size: 14px;
+font-weight: 600;
+color: #333;
+}
+
+.legend-text small {
+font-size: 12px;
+color: #666;
+}

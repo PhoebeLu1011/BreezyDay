@@ -1,0 +1,330 @@
+/* 整個頁面背景（和 Landing 的藍色系一致） */
+.dashboard-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #c7d8f0, #b7d1eb);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 32px 16px;
+}
+
+/* 中央白色大卡片 */
+.dashboard-shell {
+  width: 100%;
+  max-width: 1100px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(84, 116, 152, 0.25);
+  padding: 24px 28px 32px;
+}
+
+/* header 區 */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dashboard-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #5a7da1;
+}
+
+.dashboard-icon {
+  font-size: 1.1rem;
+}
+
+.dashboard-title-text {
+  font-size: 1rem;
+}
+
+.dashboard-date {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: #8a9db2;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* 上方右邊那排小按鈕 */
+.chip-btn {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  background: #eef3fb;
+  color: #546a86;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.chip-btn:hover {
+  background: #dde7f8;
+  box-shadow: 0 3px 8px rgba(118, 143, 176, 0.28);
+  transform: translateY(-1px);
+}
+
+.chip-btn-outline {
+  background: #fff;
+  border: 1px solid #d2dceb;
+}
+
+/* 上面四個 info 卡片 */
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .info-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-card {
+  background: #f8fbff;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 6px rgba(155, 179, 208, 0.2);
+}
+
+.info-card-label {
+  font-size: 0.85rem;
+  color: #7a8fa7;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.info-card-icon {
+  font-size: 1rem;
+}
+
+.info-card-main {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.info-card-number {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #435c80;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.badge-warning {
+  background: #f4e9b5;
+  color: #8c6a21;
+}
+
+/* Suggested Outfit card */
+.outfit-card {
+  background: #f7f9ff;
+  border-radius: 22px;
+  padding: 20px 20px 16px;
+  margin-top: 8px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px rgba(153, 176, 206, 0.25);
+}
+
+.outfit-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.outfit-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #e0e7f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.outfit-title {
+  font-weight: 600;
+  color: #425d80;
+}
+
+.outfit-subtitle {
+  font-size: 0.85rem;
+  color: #8194ad;
+}
+
+/* outfit 中間：小人 + tags */
+.outfit-body {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 700px) {
+  .outfit-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.avatar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 超簡易小人 */
+.avatar-head {
+  width: 40px;
+  height: 36px;
+  border-radius: 22px 22px 18px 18px;
+  background: #d49a63;
+  position: relative;
+}
+
+.avatar-body {
+  width: 46px;
+  height: 44px;
+  border-radius: 10px;
+  background: #f6c65c;
+  margin-top: 4px;
+}
+
+.avatar-legs {
+  width: 30px;
+  height: 40px;
+  border-radius: 12px;
+  background: #8ba7bf;
+  margin-top: 4px;
+}
+
+.outfit-tags {
+  flex: 1;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #dfe7ae;
+  color: #636026;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.outfit-note {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #8b9ab0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sparkle {
+  font-size: 0.9rem;
+}
+
+.outfit-footer {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #a0afc3;
+}
+
+/* Important Notes 區塊 */
+.notes-card {
+  margin-top: 10px;
+  background: #fff7d9;
+  border-radius: 20px;
+  padding: 16px 18px 14px;
+  border: 1px solid #f1e2aa;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.notes-icon {
+  font-size: 1.1rem;
+}
+
+.notes-title {
+  font-weight: 600;
+  color: #916327;
+}
+
+.notes-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+  color: #7b4b1e;
+}
+.info-card.clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info-card.clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.badge-neutral {
+  background: #e5e7eb; /* 灰 */
+  color: #374151;
+}
+
+.badge-good {
+  background: #bbf7d0; /* 淺綠 */
+  color: #166534;
+}
+
+.badge-warning {
+  background: #fef3c7; /* 黃 */
+  color: #92400e;
+}
+
+.badge-danger {
+  background: #fee2e2; /* 紅 */
+  color: #991b1b;
+}

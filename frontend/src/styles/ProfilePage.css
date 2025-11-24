@@ -1,0 +1,271 @@
+/* 整個頁面背景：淡藍綠漸層 */
+.profile-page {
+  min-height: 100vh;
+  padding: 32px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #c6e3ff, #e6f0ff, #f4fbf3);
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.profile-shell {
+  width: 100%;
+  max-width: 960px;
+}
+
+/* Top bar -------------------------------------------------- */
+
+.profile-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.topbar-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 6px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #355d7f;
+  font-weight: 500;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.topbar-back-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateX(-1px);
+}
+
+.topbar-back-icon {
+  font-size: 16px;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.topbar-chip-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(53, 93, 127, 0.18);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  color: #355d7f;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.topbar-chip-btn:hover {
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+/* Card -------------------------------------------------- */
+
+.profile-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(15, 35, 52, 0.12);
+  padding: 28px 32px 26px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Card header */
+
+.profile-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.profile-avatar-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #e5efff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: #355d7f;
+}
+
+.profile-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #20344b;
+}
+
+.profile-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6e8198;
+}
+
+/* Form -------------------------------------------------- */
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #435b73;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d4dde8;
+  background: #f7f9fc;
+  font-size: 14px;
+  color: #1e2f43;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.form-input:focus {
+  border-color: #4a80c4;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(74, 128, 196, 0.18);
+}
+
+.form-input-disabled {
+  color: #8a9bb1;
+  background: #edf1f8;
+  cursor: not-allowed;
+}
+
+.form-helper {
+  font-size: 12px;
+  color: #8b9bb0;
+}
+
+/* Preferred style --------------------------------------- */
+
+.style-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-secondary {
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid #c6d4ea;
+  background: #ffffff;
+  color: #355d7f;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.btn-secondary:hover {
+  background: #f4f7ff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.style-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.style-tags-empty {
+  font-size: 12px;
+  color: #9aa8b9;
+}
+
+.style-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #e5ebff;
+  color: #324c75;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.style-tag-remove {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  color: #49639c;
+}
+
+/* Save button ------------------------------------------- */
+
+.btn-save-profile {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 12px;
+  border: none;
+  background: #355d7f;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.btn-save-profile:hover {
+  background: #2e5272;
+  box-shadow: 0 4px 10px rgba(15, 35, 52, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-save-icon {
+  font-size: 16px;
+}
+
+/* 手機 */
+@media (max-width: 600px) {
+  .profile-card {
+    padding: 22px 18px 20px;
+  }
+
+  .profile-card-header {
+    align-items: flex-start;
+  }
+}
