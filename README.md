@@ -1,8 +1,68 @@
 ## Breezy Day
 
 "Breezy Day" is a website designed for people who frequently experience allergies.
+### | File Structure
+```
+BREEZYDAY/
+│
+├── backend/
+│   ├── .venv/                  # Python 虛擬環境
+│   ├── .env                    # Flask backend 環境變數
+│   ├── app.py                  # Flask 主入口
+│   └── ...（還沒 預留用)
+│
+├── frontend/
+│   ├── node_modules/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/             # 靜態圖片、icons
+│   │   │
+│   │   ├── context/
+│   │   │   └── AuthContext.tsx # JWT 登入狀態管理
+│   │   │
+│   │   ├── features/           # 各功能模組化
+│   │   │   ├── allergy/        # （預留功能，尚未實作）
+│   │   │   └── aqi/            # AQI 模組
+│   │   │       ├── aqi.css
+│   │   │       ├── AQIDashboard.tsx
+│   │   │       ├── AQIPage.tsx
+│   │   │       ├── AQITable.tsx
+│   │   │       ├── aqiTypes.ts
+│   │   │       ├── aqiUtils.ts
+│   │   │       ├── PollutantCards.tsx
+│   │   │       └── PollutantChart.tsx
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── AuthPage.tsx
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Landing.tsx
+│   │   │   └── ProfilePage.tsx
+│   │   │
+│   │   ├── services/
+│   │   │   └── authApi.ts      # Login / Register API
+│   │   │
+│   │   ├── styles/
+│   │   │   ├── Dashboard.css
+│   │   │   ├── global.css      # 全域樣式
+│   │   │   └── ProfilePage.css
+│   │   │
+│   │   ├── App.css
+│   │   ├── App.tsx             # React 主組件
+│   │   ├── index.css
+│   │   └── main.tsx            
+│   │
+│   ├── .env.local              # Vite 前端環境變數
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── tsconfig.json
+│
+├── img/                        # 專案文件用到的圖片
+└── README.md
 
-## | How to run
+```
+
+## | How to run 還沒改
 ### Prerequisites
 - Node.js 18+  
 - npm (or yarn)
