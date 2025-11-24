@@ -43,14 +43,17 @@ export default function ProfilePage({
         setProfile((prev) => ({
           ...prev,
           ...data,
-          // 後端沒給 email 就用登入使用者的 email
-          email: data.email ?? user?.email ?? prev.email,
+          email: (data.email ?? user?.email ?? prev.email) || "",
+          gender: data.gender ?? prev.gender ?? "Female",
+          dateOfBirth: data.dateOfBirth ?? prev.dateOfBirth ?? "",
+          preferredStyles: data.preferredStyles ?? prev.preferredStyles ?? [],
         }));
       })
       .catch((err) => {
         console.error("Failed to load profile:", err);
       });
   }, [token, user]);
+
 
   // ---------- 新增 style tag ----------
   const addStyle = () => {

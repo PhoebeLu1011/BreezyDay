@@ -5,8 +5,10 @@ import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import AQIPage from "./features/aqi/AQIPage";
 import ProfilePage from "./pages/ProfilePage";
+import FeedbackPage from "./pages/FeedbackPage";
 
-type Page = "landing" | "auth" | "dashboard" | "aqi" | "profile";
+
+type Page = "landing" | "auth" | "dashboard" | "aqi" | "profile" | "feedback";;
 
 export default function App() {
   const { user } = useAuth();
@@ -41,6 +43,10 @@ export default function App() {
 
   if (page === "profile") {
     return <ProfilePage onBack={() => go("dashboard")} />;
+  }
+
+  if (page === "feedback") {
+  return <FeedbackPage onBack={() => go("dashboard")} />;
   }
 
   // 已登入但 page 不是上述任一個 → fallback 到 Dashboard

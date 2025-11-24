@@ -188,6 +188,32 @@ def update_profile():
 
     return jsonify({"message": "profile updated"})
 
+# ===== Feedback Collection =====
+feedback_col = db["feedback"]
+
+
+@app.post("/api/feedback")
+@jwt_required()
+def submit_feedback():
+    user_id = get_jwt_identity()
+    oid = ObjectId(user_id)
+
+    data = request.get_json() or {}
+
+    doc = {
+        "userId": oid,
+        "wearing": data.get("wearing", ""),
+        "temperatureFeel": data.get("temperatureFeel", ""),
+        "changeOutfit": data.get("changeOutfit", ""),
+        "allergyFeel": data.get("allergyFeel", ""),
+        "rating": data.get("rating", 0),
+        "comments": data.get("comments", ""),
+        "createdAt": datetime.utcnow()
+    }
+
+    feedback_col.insert_one(doc)
+
+    return jsonify({"message": "feedback saved"})
 
 
 if __name__ == "__main__":

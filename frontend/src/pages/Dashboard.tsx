@@ -38,7 +38,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             <button className="chip-btn" onClick={() => onNavigate("profile")}>
                 Profile
             </button>
-            <button className="chip-btn">Feedback</button>
+            <button className="chip-btn" onClick={() => onNavigate("feedback")}>
+              Feedback
+            </button>
             {user && (
               <button className="chip-btn chip-btn-outline" onClick={logout}>
                 Log out
