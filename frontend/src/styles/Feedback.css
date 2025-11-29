@@ -141,3 +141,44 @@ input[type="range"] {
   text-align: center;
   color: #54707f;
 }
+/* ===== Allergy symptoms toggle group ===== */
+
+.symptom-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* single toggle button */
+.symptom-toggle {
+  border-radius: 999px;
+  border: 1px solid #d0dde2;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  background: #f7fafb;
+  color: #3c5267;
+  cursor: pointer;
+  outline: none;
+  min-width: 0;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.05s ease;
+}
+
+.symptom-toggle:hover {
+  background: #e7f1f4;
+  border-color: #9bb4c3;
+}
+
+.symptom-toggle.selected {
+  background: #4b7f67;          /* BreezyDay 主綠 */
+  border-color: #4b7f67;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(75, 127, 103, 0.25);
+  transform: translateY(-1px);
+}
+
+.symptom-toggle:active {
+  transform: translateY(0);
+  box-shadow: none;
+}

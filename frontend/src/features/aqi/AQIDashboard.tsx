@@ -14,6 +14,7 @@ interface Props {
   watchedStations: StationRow[];
   onClickWatched: (station: StationRow) => void;
   onRemoveWatched: (idx: number) => void;
+  onGoTable: () => void;
 }
 
 const AQIDashboard: React.FC<Props> = ({
@@ -27,6 +28,7 @@ const AQIDashboard: React.FC<Props> = ({
   watchedStations,
   onClickWatched,
   onRemoveWatched,
+  onGoTable, 
 }) => {
   const [scaleOpen, setScaleOpen] = useState(false);
 
@@ -41,7 +43,7 @@ const AQIDashboard: React.FC<Props> = ({
           className="btn btn-primary"
           onClick={onCurrentLocation}
         >
-          📍 Current Location
+          Current Location
         </button>
         <button
           id="btn-add-city"
@@ -183,6 +185,14 @@ const AQIDashboard: React.FC<Props> = ({
             </div>
           );
         })}
+      </div>
+      <div className="aqi-bottom-actions" style={{ marginTop: "32px", textAlign: "center" }}>
+        <button
+          className="btn btn-outline-primary"
+          onClick={onGoTable}
+        >
+          查看全台測站列表（AQI Table）
+        </button>
       </div>
     </>
   );

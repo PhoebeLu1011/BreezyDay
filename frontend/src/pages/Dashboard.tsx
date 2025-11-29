@@ -1,14 +1,13 @@
 import { useMemo } from "react";
-import { useAuth } from "../context/AuthContext";
 import "../styles/Dashboard.css";
+
 
 // ⭐ 新增：定義 props 型別
 type DashboardProps = {
-  onNavigate: (page: "landing" | "auth" | "dashboard" | "aqi"| "profile") => void;
+  onNavigate: (page: "landing" | "auth" | "dashboard" | "aqi"| "profile" | "feedback" | "weather") => void;
 };
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
-  const { user, logout } = useAuth();
 
   const today = useMemo(() => {
     return new Date().toLocaleDateString("en-US", {
@@ -35,17 +34,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           <div className="dashboard-actions">
             <button className="chip-btn">Customize</button>
             <button className="chip-btn">Share Tip</button>
-            <button className="chip-btn" onClick={() => onNavigate("profile")}>
-                Profile
-            </button>
-            <button className="chip-btn" onClick={() => onNavigate("feedback")}>
-              Feedback
-            </button>
-            {user && (
-              <button className="chip-btn chip-btn-outline" onClick={logout}>
-                Log out
-              </button>
-            )}
           </div>
         </header>
 
@@ -73,7 +61,10 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             </div>
           </div>
 
-          <div className="info-card">
+          <div
+            className="info-card clickable"
+            onClick={() => onNavigate("weather")}
+          >
             <div className="info-card-label">
               <span className="info-card-icon">💧</span> Rain Chance
             </div>
@@ -81,8 +72,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               <span className="info-card-number">45%</span>
             </div>
           </div>
+        
 
-          <div className="info-card">
+
+          <div
+            className="info-card clickable"
+            onClick={() => onNavigate("weather")}
+          >
             <div className="info-card-label">
               <span className="info-card-icon">🌡️</span> Temperature
             </div>
@@ -90,6 +86,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               <span className="info-card-number">18°C</span>
             </div>
           </div>
+
         </section>
 
         {/* Suggested outfit card */}

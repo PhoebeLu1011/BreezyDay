@@ -14,7 +14,6 @@ import {
 import "./aqi.css";
 
 // ✅ 從這裡開始改：改成打自己的後端，而不是直接打環境部
-// 開發環境可以直接寫死 localhost:5000，或用 .env 管理
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 const AQI_API_URL = `${API_BASE_URL}/api/aqi`;
@@ -29,20 +28,20 @@ const AQIPage: React.FC = () => {
   const [statusText, setStatusText] = useState("載入中...");
   const [loading, setLoading] = useState(false);
 
-  // 抓 API（改成打自己的 Flask 後端）
+  // ⭐ 新增：控制是「儀表板模式」還是「表格模式」
+  const [viewMode, setViewMode] = useState<"dashboard" | "table">("dashboard");
+
+  // 抓 API（打自己的 Flask 後端）
   const loadData = async (initial = false) => {
     setLoading(true);
     setStatusText("資料載入中...");
     try {
       const res = await fetch(AQI_API_URL, {
-        // 如果你未來對 AQI 也要帶 JWT，可以在這裡加 headers
-        // headers: { Authorization: `Bearer ${token}` }
-        credentials: "include", // 現在你的後端 CORS 有開 supports_credentials=True，保留著也可以
+        credentials: "include",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      // 後端 proxy 回來的格式會跟原本環境部 API 一樣，所以這段不用改太多
       const mapped: StationRow[] = (data?.records ?? []).map((r: any) => ({
         county: r.county || "",
         site: r.sitename || r.SiteName || "",
@@ -79,7 +78,6 @@ const AQIPage: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      // 🔁訊息改一下，因為現在不是 Token 問題，而是後端/網路問題
       setStatusText("讀取失敗，請稍後再試，或聯絡系統管理員。");
     } finally {
       setLoading(false);
@@ -219,64 +217,85 @@ const AQIPage: React.FC = () => {
 
   return (
     <div className="page">
-      {/* 上半部 Dashboard */}
-      <section className="top-section">
-        <AQIDashboard
-          locationText={locationText}
-          aqiValue={currentStation?.aqi ?? "--"}
-          aqiInfo={mainInfo}
-          aqiClassName={
-            mainInfo ? `level-status ${mainInfo.className}` : "level-status"
-          }
-          barPercent={
-            currentStation
-              ? Math.min(
-                  100,
-                  ((Number(currentStation.aqi) || 0) / 300) * 100,
-                )
-              : 0
-          }
-          onCurrentLocation={handleCurrentLocation}
-          onAddCity={handleAddCity}
-          watchedStations={watchedStations}
-          onClickWatched={(station) => setCurrentStation(station)}
-          onRemoveWatched={handleRemoveWatched}
-        />
+      {viewMode === "dashboard" ? (
+        <>
+          {/* 上半部 Dashboard（主卡片 + 污染物卡片 + 圖表） */}
+          <section className="top-section">
+            <AQIDashboard
+              locationText={locationText}
+              aqiValue={currentStation?.aqi ?? "--"}
+              aqiInfo={mainInfo}
+              aqiClassName={
+                mainInfo
+                  ? `level-status ${mainInfo.className}`
+                  : "level-status"
+              }
+              barPercent={
+                currentStation
+                  ? Math.min(
+                      100,
+                      ((Number(currentStation.aqi) || 0) / 300) * 100,
+                    )
+                  : 0
+              }
+              onCurrentLocation={handleCurrentLocation}
+              onAddCity={handleAddCity}
+              watchedStations={watchedStations}
+              onClickWatched={(station) => setCurrentStation(station)}
+              onRemoveWatched={handleRemoveWatched}
+              // ⭐ 點這顆按鈕 → 切去 Table 畫面
+              onGoTable={() => setViewMode("table")}
+            />
 
-        {/* Main Pollutants Today */}
-        <PollutantCards
-          pm25={currentPollutants.pm25}
-          pm10={currentPollutants.pm10}
-          o3={currentPollutants.o3}
-          so2={currentPollutants.so2}
-        />
+            {/* Main Pollutants Today */}
+            <PollutantCards
+              pm25={currentPollutants.pm25}
+              pm10={currentPollutants.pm10}
+              o3={currentPollutants.o3}
+              so2={currentPollutants.so2}
+            />
 
-        {/* Pollutant Chart */}
-        <PollutantChart
-          pm25={currentPollutants.pm25}
-          pm10={currentPollutants.pm10}
-          o3={currentPollutants.o3}
-          so2={currentPollutants.so2}
-        />
-      </section>
+            {/* Pollutant Chart */}
+            <PollutantChart
+              pm25={currentPollutants.pm25}
+              pm10={currentPollutants.pm10}
+              o3={currentPollutants.o3}
+              so2={currentPollutants.so2}
+            />
+          </section>
+        </>
+      ) : (
+        <>
+          {/* Table 模式：上面一個「回儀表板」按鈕 + 全螢幕 AQITable */}
+          <div style={{ marginBottom: "16px" }}>
+            <button
+              className="btn btn-link"
+              onClick={() => setViewMode("dashboard")}
+            >
+              ← 回 AQI 儀表板
+            </button>
+          </div>
 
-      {/* 下半部：表格 */}
-      <AQITable
-        rows={filteredRows}
-        rawRowsCount={rows.length}
-        keyword={keyword}
-        sortKey={sortKey}
-        levelFilter={levelFilter}
-        onKeywordChange={setKeyword}
-        onSortKeyChange={setSortKey}
-        onLevelFilterChange={setLevelFilter}
-        onRefresh={() => loadData(false)}
-        onReset={handleResetFilters}
-        statusText={statusText}
-        loading={loading}
-        onSelectRow={(r) => setCurrentStation(r)}
-        aqiClass={aqiClass}
-      />
+          <AQITable
+            rows={filteredRows}
+            rawRowsCount={rows.length}
+            keyword={keyword}
+            sortKey={sortKey}
+            levelFilter={levelFilter}
+            onKeywordChange={setKeyword}
+            onSortKeyChange={setSortKey}
+            onLevelFilterChange={setLevelFilter}
+            onRefresh={() => loadData(false)}
+            onReset={handleResetFilters}
+            statusText={statusText}
+            loading={loading}
+            onSelectRow={(r) => {
+              setCurrentStation(r);
+            }}
+            aqiClass={aqiClass}
+          />
+        </>
+      )}
     </div>
   );
 };
