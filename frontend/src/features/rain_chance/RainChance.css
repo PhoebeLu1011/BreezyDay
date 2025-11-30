@@ -1,0 +1,205 @@
+/* ========== Page layout ========== */
+.rainchance-page {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #dfe7f5, #cfe0f7);
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Back button */
+.rc-back-btn {
+  background: none;
+  border: none;
+  color: #4a5568;
+  font-size: 15px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+.rc-back-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* ========== Main card ========== */
+.rainchance-card {
+  width: 90%;
+  max-width: 850px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  padding: 32px 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Header row */
+.rainchance-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.rc-header-icon {
+  font-size: 28px;
+}
+
+.rc-title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.rc-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ========== Slider section ========== */
+.rc-label-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+/* Intensity label colors */
+.rc-intensity {
+  font-weight: 600;
+}
+
+.rc-level-low {
+  color: #6b7280; /* 灰色 */
+}
+
+.rc-level-medium {
+  color: #d97706; /* 橘色 */
+}
+
+.rc-level-high {
+  color: #dc2626; /* 紅色 */
+}
+
+/* Slider wrapper */
+.rc-slider-wrap {
+  width: 100%;
+}
+
+.rc-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 8px;
+  background: #bfc7d5;
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Slider thumb */
+.rc-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #3b82f6; /* 深藍 */
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+/* On Firefox */
+.rc-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.rc-helper-text {
+  text-align: center;
+  color: #6b7280;
+  margin-top: 8px;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+/* ========== Bottom info cards ========== */
+.rc-bottom-row {
+  display: flex;
+  gap: 18px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.rc-info-card {
+  flex: 1;
+  min-width: 220px;
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.rc-info-icon {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+.rc-info-label {
+  font-size: 14px;
+  color: #7d8592;
+}
+
+.rc-info-value {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* 讓整個 page 可以放絕對定位的雨滴 */
+.rc-page {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 雨滴覆蓋整個畫面，但不擋點擊 */
+.rc-rain-layer {
+  position: fixed;          /* 跟視窗同高，滑動也會持續下雨 */
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 雨滴本體：細長的線 + 向下掉落動畫 */
+.rc-raindrop {
+  position: absolute;
+  top: -60px;               /* 從畫面上方外面開始掉 */
+  width: 2px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  animation-name: rc-raindrop-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* 掉落動畫：往下超過畫面底部一點 */
+@keyframes rc-raindrop-fall {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(120vh);
+  }
+}
+
+/* 確保卡片在雨滴上方 */
+.rc-card,
+.rc-back-btn {
+  position: relative;
+  z-index: 1;
+}
+

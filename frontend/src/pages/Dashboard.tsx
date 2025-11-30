@@ -4,7 +4,7 @@ import "../styles/Dashboard.css";
 
 // ⭐ 新增：定義 props 型別
 type DashboardProps = {
-  onNavigate: (page: "landing" | "auth" | "dashboard" | "aqi"| "profile" | "feedback" | "weather") => void;
+  onNavigate: (page: "landing" | "auth" | "dashboard" | "aqi"| "profile" | "feedback" | "weather" | "rain" ) => void;
 };
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
@@ -63,7 +63,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
           <div
             className="info-card clickable"
-            onClick={() => onNavigate("weather")}
+            onClick={() => onNavigate("rain")}
           >
             <div className="info-card-label">
               <span className="info-card-icon">💧</span> Rain Chance

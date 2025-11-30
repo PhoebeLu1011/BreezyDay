@@ -1,5 +1,5 @@
 // src/features/weather/WeatherPage.tsx
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react"; // ⭐ 多了 useEffect
 import "./WeatherPage.css";
 
 const API_BASE_URL =
@@ -117,7 +117,6 @@ export default function WeatherPage({ onBack }: Props) {
     }
   }, [allLocations]);
 
-
   // ---- 從 WeatherElement 抓「溫度」 & 「天氣現象」 ----
   function getTempElement(loc: CwaLocationRaw): CwaElement | undefined {
     const arr = loc.WeatherElement || [];
@@ -229,7 +228,7 @@ export default function WeatherPage({ onBack }: Props) {
   }
 
   // ---- 依 GPS 找最近的預報點 ----
-  async function handleUseCurrentLocation() {
+  const handleUseCurrentLocation = useCallback(async () => { // ⭐ 包成 useCallback
     if (!navigator.geolocation) {
       alert("這個瀏覽器不支援 GPS 取得位置");
       return;
@@ -264,7 +263,6 @@ export default function WeatherPage({ onBack }: Props) {
       let best: CwaLocationRaw | null = null;
       let bestDist = Infinity;
 
-      // 這裡也改成用 locations
       for (const loc of locations) {
         const la = Number(loc.Latitude);
         const lo = Number(loc.Longitude);
@@ -293,31 +291,37 @@ export default function WeatherPage({ onBack }: Props) {
     } finally {
       setLoadingGps(false);
     }
-  }
+  }, [fetchAllLocations]); // ⭐ 依賴 fetchAllLocations
 
+  // ⭐ 一進來頁面自動叫 GPS
+  useEffect(() => {
+    handleUseCurrentLocation();
+  }, [handleUseCurrentLocation]);
 
   return (
-    <div className="weather-page container">
-      {/* 如果有 TopNav 的 Back，就放這邊 */}
+    <div className="weather-page">
       {onBack && (
-        <button className="btn btn-link mb-3" onClick={onBack}>
-          ← Back
+        <button className="topbar-back-btn" onClick={onBack}>
+          <span className="topbar-back-icon">←</span>
+          <span>Back</span>
         </button>
       )}
 
-      <h1 className="weather-title">一週天氣預報 - GPS 單點查詢</h1>
+      <h1 className="weather-title">一週天氣預報</h1>
 
       {/* 控制區 */}
       <div className="card-box mb-4">
         <p className="mb-2 text-muted">
-          這個版本只用「目前位置」來找最近的預報點，不需要選縣市或行政區。
+          這個版本會在載入頁面時自動使用「目前位置」來找最近的預報點。
         </p>
+
+        {/* ⭐ 這個按鈕可以改成「重新取得目前位置」，看你要不要保留 */}
         <button
           className="btn btn-primary"
           onClick={handleUseCurrentLocation}
           disabled={loadingGps || loadingData}
         >
-          {loadingGps || loadingData ? "讀取中…" : "使用目前位置讀取天氣"}
+          {loadingGps || loadingData ? "讀取中…" : "重新取得目前位置"}
         </button>
 
         <div className="mt-3 text-muted" id="status">

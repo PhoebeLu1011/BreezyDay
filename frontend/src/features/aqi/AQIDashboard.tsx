@@ -29,6 +29,7 @@ const AQIDashboard: React.FC<Props> = ({
   onClickWatched,
   onRemoveWatched,
   onGoTable, 
+
 }) => {
   const [scaleOpen, setScaleOpen] = useState(false);
 

@@ -9,6 +9,7 @@ import ProfilePage from "./pages/ProfilePage";
 import FeedbackPage from "./pages/FeedbackPage";
 import WeatherPage from "./features/weather/WeatherPage";
 import TopNav from "./components/TopNav";
+import RainChance from "./features/rain_chance/RainChance";
 
 type Page =
   | "landing"
@@ -17,13 +18,56 @@ type Page =
   | "aqi"
   | "profile"
   | "feedback"
-  | "weather";
+  | "weather"
+  | "rain";
 
 const STORAGE_KEY = "breezyday_last_page";
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [page, setPage] = useState<Page>("landing");
+
+  // 所有 hooks 一律寫在這裡（最上面），不要被 if 包住
+  useEffect(() => {
+    if (loading) return; // auth 還在初始化就先別動
+
+    if (!user) {
+      // 真正「沒有登入」的情況才清掉
+      setPage("landing");
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      const saved = localStorage.getItem(STORAGE_KEY) as Page | null;
+      if (
+        saved === "dashboard" ||
+        saved === "aqi" ||
+        saved === "weather" ||
+        saved === "profile" ||
+        saved === "feedback"||
+        saved === "rain"
+      ) {
+        setPage(saved);
+      } else {
+        setPage("dashboard");
+      }
+    }
+  }, [user, loading]);
+
+  // hooks 全部宣告完之後，才可以早退 return
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "1.2rem",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
 
   // 統一切頁函式：切頁 + 記錄最後停留頁面
   const go = (p: Page) => {
@@ -33,45 +77,19 @@ export default function App() {
     }
   };
 
-  // 根據 user 狀態決定進哪一頁
-  useEffect(() => {
-    if (!user) {
-      // 還沒登入 / 登出
-      setPage("landing");
-      localStorage.removeItem(STORAGE_KEY);
-    } else {
-      // 已登入 → 試著讀最後停留頁面
-      const saved = localStorage.getItem(STORAGE_KEY) as Page | null;
-      if (
-        saved === "dashboard" ||
-        saved === "aqi" ||
-        saved === "weather" ||
-        saved === "profile" ||
-        saved === "feedback"
-      ) {
-        setPage(saved);
-      } else {
-        setPage("dashboard");
-      }
-    }
-  }, [user]);
-
   // ===== 使用者尚未登入 =====
   if (!user) {
     if (page === "auth") {
       return <AuthPage onAuthSuccess={() => go("dashboard")} />;
     }
-    // 預設 Landing
     return <Landing onEnter={() => go("auth")} />;
   }
 
   // ===== 使用者已登入 =====
   return (
     <>
-      {/* 全站共用頂端導覽列 */}
       <TopNav onNavigate={go} />
 
-      {/* 避免內容被 fixed-top Navbar 擋住 */}
       <div style={{ paddingTop: "70px" }}>
         {page === "dashboard" && <Dashboard onNavigate={go} />}
 
@@ -85,8 +103,9 @@ export default function App() {
           <FeedbackPage onBack={() => go("dashboard")} />
         )}
 
-        {/* fallback：如果 page 怪怪的就回 dashboard */}
-        {["dashboard", "aqi", "weather", "profile", "feedback"].indexOf(
+        {page === "rain" && <RainChance onBack={() => go("dashboard")} />}
+
+        {["dashboard", "aqi", "weather", "profile", "feedback", "rain"].indexOf(
           page
         ) === -1 && <Dashboard onNavigate={go} />}
       </div>

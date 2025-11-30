@@ -10,6 +10,7 @@ import { login as apiLogin, register as apiRegister } from "../services/authApi"
 interface AuthCtx {
   user: { email: string } | null;
   token: string | null;
+  loading: boolean;   // ⭐ 新增：判斷 auth 是否還在初始化
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -20,14 +21,18 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);   // ⭐ 新增
 
   useEffect(() => {
     const t = localStorage.getItem("token");
     const email = localStorage.getItem("email");
+
     if (t && email) {
       setToken(t);
       setUser({ email });
     }
+
+    setLoading(false);  // ⭐ 初始化完成
   }, []);
 
   async function login(email: string, password: string) {
@@ -40,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function register(email: string, password: string) {
     await apiRegister(email, password);
-    // 註冊完順便登入
     await login(email, password);
   }
 
@@ -52,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
