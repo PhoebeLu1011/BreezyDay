@@ -501,7 +501,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           <div className="notes-header">
             <span className="notes-icon">💡</span>
             <span className="notes-title">
-              Important Notes About Allergy
+              Allergy Advisory for Today
             </span>
           </div>
 
