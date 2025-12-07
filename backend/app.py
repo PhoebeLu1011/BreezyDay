@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import (
     JWTManager, create_access_token,
@@ -12,14 +12,18 @@ from dotenv import load_dotenv
 import os
 import requests
 import math
-
+from datetime import timedelta, datetime, timezone
+from ai_gemini import build_allergy_prompt, call_gemini
+from requests.exceptions import HTTPError
 load_dotenv()
 
 app = Flask(__name__)
 # CORS 設定
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-# React 本機預設 5173
-CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+CORS(
+    app,
+    resources={r"/api/*": {"origins": "http://localhost:5173"}},
+    supports_credentials=True,
+)
 
 # ===== JWT 設定 =====
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev_secret")
@@ -28,7 +32,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 # 中央氣象局 API 設定
 app.config["CWA_API_KEY"] = os.getenv("CWA_API_KEY", "dev_secret")  # 請替換成你的 API Key
 CWA_API_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-093"
-
+CWA_36H_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001"
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
@@ -199,7 +203,6 @@ def update_profile():
 # ===== Feedback Collection =====
 feedback_col = db["feedback"]
 
-
 @app.post("/api/feedback")
 @jwt_required()
 def submit_feedback():
@@ -210,18 +213,43 @@ def submit_feedback():
 
     doc = {
         "userId": oid,
-        "wearing": data.get("wearing", ""),
-        "temperatureFeel": data.get("temperatureFeel", ""),
-        "changeOutfit": data.get("changeOutfit", ""),
-        "allergyFeel": data.get("allergyFeel", ""),
-        "rating": data.get("rating", 0),
-        "comments": data.get("comments", ""),
-        "createdAt": datetime.utcnow()
+
+        # ===== Outfit（來自 FeedbackPage）=====
+        "outfitTop": data.get("outfitTop", ""),
+        "outfitBottom": data.get("outfitBottom", ""),
+        "outfitAccessories": data.get("outfitAccessories", ""),
+        "outfitShoes": data.get("outfitShoes", ""),
+
+        # Temperature / outfit change
+        "temperatureFeel": data.get("temperatureFeel", ""),   # very_cold / just_right / very_hot
+        "changeOutfit": data.get("changeOutfit", ""),         # cooler / same / warmer
+
+        # Allergy
+        "allergyFeel": data.get("allergyFeel", ""),           # none / normal / severe
+        "allergyImpact": int(data.get("allergyImpact", 0)),
+        "allergySymptoms": data.get("allergySymptoms", []),
+        "allergyMed": data.get("allergyMed", ""),
+
+        # Model rating
+        "recommendationRating": int(data.get("recommendationRating", 0)),
+
+        # ===== 這裡是你要加的：環境資訊 =====
+        "envAqi": data.get("envAqi"),                         # number 或 null
+        "envAqiSite": data.get("envAqiSite", ""),             # 站名
+
+        # 今天預報的高低溫 & 溫差（來自 F-C0032-001）
+        "envMaxTemp": data.get("envMaxTemp"),
+        "envMinTemp": data.get("envMinTemp"),
+        "envTempDiff": data.get("envTempDiff"),
+
+        "feedbackDate": data.get("feedbackDate", ""),
+        "createdAt": datetime.utcnow(),
     }
 
     feedback_col.insert_one(doc)
 
     return jsonify({"message": "feedback saved"})
+
 
 
 # ========== Weather 公用函式 ==========
@@ -264,7 +292,6 @@ def find_nearest_location(user_lat, user_lon, weather_data):
         return None
 
     # 注意：官方實際欄位名可能是 "Locations" / "Location"
-    # 這裡沿用你原來的寫法
     locations = weather_data["records"]["locations"][0]["location"]
     nearest_location = None
     min_distance = float('inf')
@@ -417,6 +444,169 @@ def get_cwa93():
     except Exception as e:
         print("[CWA93 ERROR - OTHER]", repr(e))
         return jsonify({"error": "取得 CWA93 失敗", "detail": str(e)}), 500
+
+@app.get("/api/weather/today-range")
+def get_today_temp_range():
+    location_name = request.args.get("locationName", "臺北市")
+
+    # ✅ 從 app.config 拿 API Key（上面已經設定過）
+    API_KEY = app.config.get("CWA_API_KEY")
+    if not API_KEY:
+        return jsonify({
+            "success": False,
+            "error": "後端未設定 CWA_API_KEY"
+        }), 500
+
+    url = (
+        "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001"
+        f"?Authorization={API_KEY}&locationName={location_name}"
+    )
+
+    try:
+        res = requests.get(url, timeout=10)
+        res.raise_for_status()
+        data = res.json()
+    except Exception as e:
+        print("[today-range] request error:", e)
+        return jsonify({
+            "success": False,
+            "error": f"Request failed: {str(e)}"
+        }), 500
+
+    try:
+        location_data = data["records"]["location"][0]
+        weather_elements = location_data["weatherElement"]
+    except (KeyError, IndexError) as e:
+        print("[today-range] parse error:", e)
+        return jsonify({
+            "success": False,
+            "locationName": location_name,
+            "maxTemp": None,
+            "minTemp": None,
+            "tempDiff": None,
+        }), 200
+
+    # 使用台灣時間
+    tz_taipei = timezone(timedelta(hours=8))
+    today_str = datetime.now(tz_taipei).strftime("%Y-%m-%d")
+
+    max_list = []
+    min_list = []
+
+    print("=== [today-range] today_str =", today_str)
+
+    # 走訪 F-C0032-001 的 MaxT / MinT
+    for element in weather_elements:
+        name = element.get("elementName")
+        time_list = element.get("time", [])
+
+        for t in time_list:
+            start_time = t.get("startTime", "")
+            date_part = start_time[:10]  # YYYY-MM-DD
+
+            # debug 用
+            print("[today-range] start_time =", start_time)
+
+            if date_part != today_str:
+                continue
+
+            value = t.get("parameter", {}).get("parameterName")
+            if value is None:
+                continue
+
+            try:
+                value = float(value)
+            except ValueError:
+                continue
+
+            if name == "MaxT":
+                max_list.append(value)
+            elif name == "MinT":
+                min_list.append(value)
+
+    max_temp = max(max_list) if max_list else None
+    min_temp = min(min_list) if min_list else None
+    temp_diff = (
+        max_temp - min_temp
+        if max_temp is not None and min_temp is not None
+        else None
+    )
+
+    return jsonify({
+        "success": True,
+        "date": today_str,
+        "locationName": location_name,
+        "maxTemp": max_temp,
+        "minTemp": min_temp,
+        "tempDiff": temp_diff,
+        "queryLocationName": location_name
+    })
+
+
+# 取得使用者全部 feedback
+@app.get("/api/feedback")
+@jwt_required()
+def get_all_feedback():
+    user_id = get_jwt_identity()
+    oid = ObjectId(user_id)
+
+    cursor = feedback_col.find({"userId": oid}).sort("createdAt", -1)
+
+    feedbacks = []
+    for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        doc["userId"] = str(doc["userId"])
+        feedbacks.append(doc)
+
+    return jsonify({"success": True, "data": feedbacks})
+
+# ========== AI Allergy Tips ==========
+
+@app.route("/api/ai/allergy-tips", methods=["POST", "OPTIONS"])
+@cross_origin(
+    origins="http://localhost:5173",
+    supports_credentials=True
+)
+@jwt_required()
+def get_allergy_tips():
+    user_id = get_jwt_identity()
+    oid = ObjectId(user_id)
+
+    body = request.get_json() or {}
+
+    api_key = body.get("geminiApiKey") or body.get("apiKey")
+    env = body.get("env") or {}
+    today_env = {
+        "aqi": env.get("aqi"),
+        "tempMin": env.get("tempMin"),
+        "tempMax": env.get("tempMax"),
+    }
+
+    cursor = feedback_col.find({"userId": oid}).sort("createdAt", -1).limit(10)
+    feedbacks = list(cursor)
+
+    prompt = build_allergy_prompt(feedbacks, today_env)
+
+    try:
+        tips = call_gemini(api_key, prompt)
+        return jsonify({"success": True, "tips": tips})
+    except HTTPError as e:
+        resp = e.response
+        status = resp.status_code if resp is not None else 500
+        body_text = resp.text if resp is not None else ""
+        print("Gemini HTTP error:", status, body_text[:800])
+        return jsonify({
+            "success": False,
+            "error": f"Gemini HTTP error {status}",
+            "detail": body_text,
+        }), status
+    except Exception as e:
+        print("Gemini error (other):", repr(e))
+        return jsonify({
+            "success": False,
+            "error": "Failed to generate allergy tips",
+            "detail": str(e),
+        }), 500
 
 # ========== Health Check ==========
 

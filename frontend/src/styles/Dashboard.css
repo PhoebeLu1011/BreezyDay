@@ -328,3 +328,31 @@
   background: #fee2e2; /* 紅 */
   color: #991b1b;
 }
+/* =============================== */
+/*    Allergy Risk Badge Styles    */
+/* =============================== */
+
+
+
+/* Allergy Risk colors – 套在 .badge 上的 modifier */
+
+.badge-risk-low {
+  background-color: rgba(111, 216, 115, 0.8); /* #6fd873 */
+  color: #fff;
+}
+
+.badge-risk-moderate {
+  background-color: rgba(251, 192, 45, 0.8); /* #fbc02d */
+  color: #333;
+}
+
+.badge-risk-dangerous {
+  background-color: rgba(229, 57, 53, 0.8); /* #e53935 */
+  color: #fff;
+}
+
+.badge-risk-unknown {
+  background-color: rgba(158, 158, 158, 0.8); /* #9e9e9e */
+  color: #fff;
+}
+

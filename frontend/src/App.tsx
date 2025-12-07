@@ -1,12 +1,14 @@
 // src/App.tsx
 import { useState, useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
+
 import Landing from "./pages/Landing";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import AQIPage from "./features/aqi/AQIPage";
 import ProfilePage from "./pages/ProfilePage";
 import FeedbackPage from "./pages/FeedbackPage";
+import FeedbackHistoryPage from "./pages/FeedbackHistoryPage";   
 import WeatherPage from "./features/weather/WeatherPage";
 import TopNav from "./components/TopNav";
 import RainChance from "./features/rain_chance/RainChance";
@@ -18,6 +20,7 @@ type Page =
   | "aqi"
   | "profile"
   | "feedback"
+  | "feedbackHistory"   
   | "weather"
   | "rain";
 
@@ -27,12 +30,11 @@ export default function App() {
   const { user, loading } = useAuth();
   const [page, setPage] = useState<Page>("landing");
 
-  // 所有 hooks 一律寫在這裡（最上面），不要被 if 包住
+  // -------- Restore last page --------
   useEffect(() => {
-    if (loading) return; // auth 還在初始化就先別動
+    if (loading) return;
 
     if (!user) {
-      // 真正「沒有登入」的情況才清掉
       setPage("landing");
       localStorage.removeItem(STORAGE_KEY);
     } else {
@@ -42,7 +44,8 @@ export default function App() {
         saved === "aqi" ||
         saved === "weather" ||
         saved === "profile" ||
-        saved === "feedback"||
+        saved === "feedback" ||
+        saved === "feedbackHistory" ||   // ⭐ 新增
         saved === "rain"
       ) {
         setPage(saved);
@@ -52,7 +55,6 @@ export default function App() {
     }
   }, [user, loading]);
 
-  // hooks 全部宣告完之後，才可以早退 return
   if (loading) {
     return (
       <div
@@ -69,7 +71,7 @@ export default function App() {
     );
   }
 
-  // 統一切頁函式：切頁 + 記錄最後停留頁面
+  // ---------- navigate ----------
   const go = (p: Page) => {
     setPage(p);
     if (p !== "landing" && p !== "auth") {
@@ -77,7 +79,7 @@ export default function App() {
     }
   };
 
-  // ===== 使用者尚未登入 =====
+  // ---------- visitor ----------
   if (!user) {
     if (page === "auth") {
       return <AuthPage onAuthSuccess={() => go("dashboard")} />;
@@ -85,29 +87,40 @@ export default function App() {
     return <Landing onEnter={() => go("auth")} />;
   }
 
-  // ===== 使用者已登入 =====
+  // ---------- logged-in ----------
   return (
     <>
       <TopNav onNavigate={go} />
 
       <div style={{ paddingTop: "70px" }}>
+
         {page === "dashboard" && <Dashboard onNavigate={go} />}
 
         {page === "aqi" && <AQIPage />}
 
-        {page === "weather" && <WeatherPage onBack={() => go("dashboard")} />}
+        {page === "weather" && (
+          <WeatherPage onBack={() => go("dashboard")} />
+        )}
 
-        {page === "profile" && <ProfilePage onBack={() => go("dashboard")} />}
+        {page === "profile" && (
+          <ProfilePage
+            onBack={() => go("dashboard")}
+            onViewFeedback={() => go("feedbackHistory")}   
+          />
+        )}
 
         {page === "feedback" && (
           <FeedbackPage onBack={() => go("dashboard")} />
         )}
 
-        {page === "rain" && <RainChance onBack={() => go("dashboard")} />}
+        {page === "feedbackHistory" && (   
+          <FeedbackHistoryPage onBack={() => go("profile")} />
+        )}
 
-        {["dashboard", "aqi", "weather", "profile", "feedback", "rain"].indexOf(
-          page
-        ) === -1 && <Dashboard onNavigate={go} />}
+        {page === "rain" && (
+          <RainChance onBack={() => go("dashboard")} />
+        )}
+
       </div>
     </>
   );

@@ -30,6 +30,7 @@ export default function ProfilePage({
   });
 
   const [newStyle, setNewStyle] = useState("");
+  const [geminiKey, setGeminiKey] = useState("");
 
   // ---------- 讀取資料 ----------
   useEffect(() => {
@@ -54,6 +55,13 @@ export default function ProfilePage({
       });
   }, [token, user]);
 
+  // 載入本機儲存的 Gemini API key（只存在瀏覽器）
+  useEffect(() => {
+    const saved = localStorage.getItem("geminiApiKey");
+    if (saved) {
+      setGeminiKey(saved);
+    }
+  }, []);
 
   // ---------- 新增 style tag ----------
   const addStyle = () => {
@@ -78,7 +86,9 @@ export default function ProfilePage({
   };
 
   // Enter 也可以加 tag
-  const handleNewStyleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleNewStyleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === "Enter") {
       e.preventDefault();
       addStyle();
@@ -101,6 +111,14 @@ export default function ProfilePage({
         console.error(err);
         alert("Failed to update profile.");
       });
+  };
+
+  const saveGeminiKeyLocal = () => {
+    const trimmed = geminiKey.trim();
+    localStorage.setItem("geminiApiKey", trimmed);
+    alert(
+      "Gemini API key 已儲存在這台裝置的瀏覽器中，沒有存進資料庫。"
+    );
   };
 
   // ---------- 上方按鈕 handler ----------
@@ -174,9 +192,7 @@ export default function ProfilePage({
                 value={profile.email || user?.email || ""}
                 disabled
               />
-              <div className="form-helper">
-                Email cannot be changed
-              </div>
+              <div className="form-helper">Email cannot be changed</div>
             </div>
 
             {/* Gender */}
@@ -253,9 +269,40 @@ export default function ProfilePage({
 
           {/* Save button */}
           <button className="btn-save-profile" onClick={saveProfile}>
-            <span className="btn-save-icon">💾</span>
             <span>Save Changes</span>
           </button>
+
+          {/* AI Settings */}
+          <div className="ai-settings-block">
+            <h2 className="ai-settings-title">AI Settings</h2>
+            <p className="ai-settings-subtitle">
+              Store your Gemini API key locally to enable personalized allergy
+              tips on the dashboard.
+            </p>
+
+            <div className="form-field">
+              <label className="form-label">Gemini API Key</label>
+              <input
+                className="form-input"
+                type="password"
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="Paste your Gemini API key here"
+              />
+              <div className="form-helper">
+                This key is saved only on this device and is never stored in our
+                database.
+              </div>
+            </div>
+
+            <button
+              className="btn-save-profile"
+              type="button"
+              onClick={saveGeminiKeyLocal}
+            >
+              <span>Save Gemini Key Locally</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

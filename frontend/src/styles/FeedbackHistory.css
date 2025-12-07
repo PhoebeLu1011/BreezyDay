@@ -1,0 +1,216 @@
+/* ================================
+   整體外框
+================================ */
+
+.feedback-history-container {
+  min-height: calc(100vh - 70px);
+  padding: 32px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: radial-gradient(
+    circle at top left,
+    #e5f3ff 0,
+    #f1f7f4 35%,
+    #e6f5ff 70%,
+    #dde9ea 100%
+  );
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1f2933;
+}
+
+/* ================================
+   Top Bar
+================================ */
+
+.history-topbar {
+  width: 100%;
+  max-width: 1120px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.history-topbar h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #16364d;
+}
+
+.back-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  color: #40687e;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.back-btn:hover {
+  background: rgba(64, 104, 126, 0.08);
+  transform: translateX(-1px);
+}
+
+/* ================================
+   Summary Cards
+================================ */
+
+.summary-row {
+  width: 100%;
+  max-width: 1120px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  flex: 1 1 240px;
+  background: #ffffffd9;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.summary-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7b8c;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #172b4d;
+}
+
+/* ================================
+   History List Wrapper
+================================ */
+
+.history-list {
+  width: 100%;
+  max-width: 1120px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  padding: 20px 22px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  min-height: 260px;
+}
+
+.empty-msg {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a9aa8;
+  font-size: 0.95rem;
+}
+
+/* ================================
+   Horizontal Scroll Section
+================================ */
+
+.history-scroller {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+/* ================================
+   Header Row
+================================ */
+
+.history-header-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 1300px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(148, 180, 214, 0.45);
+}
+
+.history-header-cell {
+  min-width: 130px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7b8c;
+}
+
+/* ================================
+   Data Rows (整條藍色橫條)
+================================ */
+
+/* 每一列：整條藍色卡片 */
+.history-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 1300px;
+
+  margin-top: 14px;
+  padding: 16px 18px;
+
+  border-radius: 18px;
+  background: #f5f9ff;
+  border: 1px solid rgba(148, 180, 214, 0.45);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+
+  transition: background 0.15s ease, box-shadow 0.2s ease,
+    transform 0.1s ease;
+}
+
+.history-row:hover {
+  background: #eef6ff;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
+  transform: translateY(-1px);
+}
+
+/* 每一欄寬度設定 */
+.history-cell {
+  min-width: 130px;
+  max-width: 200px;
+  font-size: 0.85rem;
+  color: #243b53;
+}
+
+.history-cell-date {
+  min-width: 150px;
+  font-weight: 600;
+  color: #20374c;
+}
+
+/* 兩行顯示用 */
+.cell-main {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #20374c;
+}
+
+.cell-sub {
+  font-size: 0.78rem;
+  color: #8090a0;
+}
+
+/* ================================
+   RWD
+================================ */
+
+@media (max-width: 768px) {
+  .history-header-row {
+    min-width: 900px;
+  }
+
+  .history-row {
+    min-width: 900px;
+    padding: 12px 14px;
+  }
+
+  .history-header-cell,
+  .history-cell {
+    min-width: 110px;
+  }
+}
