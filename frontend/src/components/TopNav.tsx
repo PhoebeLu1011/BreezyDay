@@ -9,7 +9,7 @@ type Page =
   | "aqi"
   | "profile"
   | "feedback"
-  | "weather";
+  | "feedbackHistory";
 
 type Props = {
   onNavigate: (page: Page) => void;
@@ -65,16 +65,6 @@ export default function TopNav({ onNavigate }: Props) {
               <span
                 className="nav-link"
                 role="button"
-                onClick={() => onNavigate("weather")}
-              >
-                Weather
-              </span>
-            </li>
-
-            <li className="nav-item">
-              <span
-                className="nav-link"
-                role="button"
                 onClick={() => onNavigate("profile")}
               >
                 Profile
@@ -90,6 +80,17 @@ export default function TopNav({ onNavigate }: Props) {
                 Feedback
               </span>
             </li>
+
+            <li className="nav-item">
+              <span
+                className="nav-link"
+                role="button"
+                onClick={() => onNavigate("feedbackHistory")}
+              >
+                History(feedback)
+              </span>
+            </li>
+            
             <li className="nav-item">
                 <span
                     className="nav-link"

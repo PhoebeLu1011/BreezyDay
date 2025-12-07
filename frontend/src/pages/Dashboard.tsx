@@ -6,19 +6,19 @@ import "../styles/Dashboard.css";
 import { getAqiInfo, findNearestStation } from "../features/aqi/aqiUtils";
 import type { StationRow } from "../features/aqi/aqiTypes";
 
+// 跟 App.tsx 相同的 Page 型別
+type Page =
+  | "landing"
+  | "auth"
+  | "dashboard"
+  | "aqi"
+  | "profile"
+  | "feedback"
+  | "feedbackHistory";
+
 // 定義 props 型別
 type DashboardProps = {
-  onNavigate: (
-    page:
-      | "landing"
-      | "auth"
-      | "dashboard"
-      | "aqi"
-      | "profile"
-      | "feedback"
-      | "weather"
-      | "rain"
-  ) => void;
+  onNavigate: (page: Page) => void;
 };
 
 const API_BASE_URL =
@@ -90,6 +90,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const [aqiLabel, setAqiLabel] = useState<string | null>(null);
   const [aqiLevelClass, setAqiLevelClass] =
     useState<string>("badge-warning");
+
   //  AQI 數值（給 Allergy Risk + AI 用）
   const [aqiValue, setAqiValue] = useState<number | null>(null);
 
@@ -99,9 +100,22 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const [tempMax, setTempMax] = useState<number | null>(null);
   const [tempDiff, setTempDiff] = useState<number | null>(null);
 
+  // 今日降雨機率 + 天氣敘述
+  const [rainPop, setRainPop] = useState<number | null>(null);
+  const [weatherDesc, setWeatherDesc] = useState<string>("");
+
   //  AI Allergy Tips（Gemini)
   const [aiTips, setAiTips] = useState<string[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
+  
+  //  AI Outfit（Gemini）
+  const [aiTop, setAiTop] = useState("");
+  const [aiOuter, setAiOuter] = useState("");
+  const [aiBottom, setAiBottom] = useState("");
+  const [aiNote, setAiNote] = useState("");
+
+  // 顯示用的名字
+  const [displayName, setDisplayName] = useState<string>("");
 
   // ===== 呼叫後端 /api/ai/allergy-tips，取得 Gemini 建議 =====
   const loadAiAllergyTips = async (
@@ -151,6 +165,81 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     }
   };
 
+  // ===== 呼叫後端 /api/ai/outfit，取得 Gemini 穿搭建議 =====
+  const loadAiOutfit = async (
+    minT: number | null,
+    maxT: number | null,
+    rain: number | null,
+    desc: string,
+    aqi: number | null
+  ) => {
+    const apiKey = localStorage.getItem("geminiApiKey");
+    if (!apiKey) {
+      console.warn("No Gemini API key found in localStorage (outfit)");
+      return;
+    }
+    if (!token) {
+      console.warn("No auth token, skip AI outfit");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/ai/outfit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          geminiApiKey: apiKey,
+          env: {
+            tempMin: minT,
+            tempMax: maxT,
+            rainPop: rain,
+            weatherDesc: desc,
+            aqi,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setAiTop(data.top || "");
+        setAiOuter(data.outer || "");
+        setAiBottom(data.bottom || "");
+        setAiNote(data.note || "");
+      } else {
+        console.error("AI outfit error:", data);
+      }
+    } catch (err) {
+      console.error("AI outfit fetch failed:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+
+    const loadProfile = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // 優先用 username，沒有就用 email
+        setDisplayName(data.username || data.email || "");
+      } catch (err) {
+        console.error("loadProfile error:", err);
+      }
+    };
+
+    loadProfile();
+  }, [token]);
+
+
   useEffect(() => {
     // 把原始 AQI records 轉成 StationRow[]
     const mapToRows = (records: any[]): StationRow[] =>
@@ -199,6 +288,14 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           setTempMin(data.minTemp ?? data.minT ?? null);
           setTempMax(data.maxTemp ?? data.maxT ?? null);
           setTempDiff(data.tempDiff ?? data.diff ?? null);
+
+          // 從後端抓 pop12h + weatherDesc
+          setRainPop(
+            typeof data.pop12h === "number"
+              ? data.pop12h
+              : data.pop ?? null
+          );
+          setWeatherDesc(data.weatherDesc || data.wx || "");
         }
       } catch (err) {
         console.error("loadTempByLocation error:", err);
@@ -286,6 +383,25 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aqiValue, tempMin, tempMax]);
 
+  // Outfit：當三個主要環境值載入後就呼叫
+  useEffect(() => {
+    if (
+      aqiValue === null ||
+      tempMin === null ||
+      tempMax === null
+    ) {
+      return;
+    }
+
+    loadAiOutfit(
+      tempMin,
+      tempMax,
+      rainPop,       // 可能是 null，沒關係
+      weatherDesc,   // 一開始是 ""，也沒關係
+      aqiValue
+    );
+  }, [aqiValue, tempMin, tempMax]);
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-shell">
@@ -293,16 +409,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <header className="dashboard-header">
           <div>
             <div className="dashboard-title-row">
-              <span className="dashboard-icon">✨</span>
-              <span className="dashboard-title-text">Dashboard</span>
+              <span className="dashboard-title-text">
+                Hi, {displayName || "there"}, how's it going today?
+              </span>
             </div>
             <div className="dashboard-date">{today}</div>
           </div>
 
-          <div className="dashboard-actions">
-            <button className="chip-btn">Customize</button>
-            <button className="chip-btn">Share Tip</button>
-          </div>
         </header>
 
         {/* Info cards row */}
@@ -346,23 +459,26 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             </div>
           </div>
 
-          {/* Rain Chance（之後可以接真正 API） */}
+          {/* Weather Phenomenon */}
           <div
-            className="info-card clickable"
-            onClick={() => onNavigate("rain")}
+            className="info-card"
           >
             <div className="info-card-label">
-              <span className="info-card-icon">💧</span> Rain Chance
+              <span className="info-card-icon">🌤️</span> Weather Phenomenon
             </div>
             <div className="info-card-main">
-              <span className="info-card-number">45%</span>
+              {/* 天氣敘述小字放這裡（可選） */}
+              {weatherDesc && (
+                <span className="info-card-subtext">
+                  {weatherDesc}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Temperature 卡片：顯示今天高低溫簡略版 */}
           <div
-            className="info-card clickable"
-            onClick={() => onNavigate("weather")}
+            className="info-card"
           >
             <div className="info-card-label">
               <span className="info-card-icon">🌡️</span> Temperature
@@ -422,17 +538,31 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             </div>
 
             <div className="outfit-tags">
-              <span className="tag-pill">Light jacket</span>
-              <span className="tag-pill">Long-sleeved shirt</span>
-              <span className="tag-pill">Jeans</span>
+              {aiOuter || aiTop || aiBottom ? (
+                <>
+                  {aiOuter && <span className="tag-pill">{aiOuter}</span>}
+                  {aiTop && <span className="tag-pill">{aiTop}</span>}
+                  {aiBottom && <span className="tag-pill">{aiBottom}</span>}
+                </>
+              ) : (
+                <span className="tag-pill">
+                  {localStorage.getItem("geminiApiKey")
+                    ? "Loading outfit..."
+                    : "Add Gemini API key in Profile"}
+                </span>
+              )}
+
 
               <div className="outfit-note">
-                <span className="sparkle">✨</span> No special items needed
+                <span className="sparkle">✨</span>{" "}
+                {aiNote || (localStorage.getItem("geminiApiKey") ? "Loading..." : "Add Gemini API key")}
+
               </div>
             </div>
+
           </div>
 
-          <div className="outfit-footer">Afternoon Outfit</div>
+          <div className="outfit-footer">Outfit</div>
         </section>
       </div>
     </div>

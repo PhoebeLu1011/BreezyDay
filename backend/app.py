@@ -13,7 +13,7 @@ import os
 import requests
 import math
 from datetime import timedelta, datetime, timezone
-from ai_gemini import build_allergy_prompt, call_gemini
+from ai_gemini import build_allergy_prompt, call_gemini, build_outfit_prompt
 from requests.exceptions import HTTPError
 load_dotenv()
 
@@ -30,9 +30,8 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev_secret")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 
 # 中央氣象局 API 設定
-app.config["CWA_API_KEY"] = os.getenv("CWA_API_KEY", "dev_secret")  # 請替換成你的 API Key
-CWA_API_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-093"
-CWA_36H_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001"
+app.config["CWA_API_KEY"] = os.getenv("CWA_API_KEY", "dev_secret")  
+
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
@@ -120,14 +119,6 @@ def me():
         return jsonify({"message": "找不到使用者"}), 404
 
     return jsonify(user_to_dict(user))
-
-
-# 之後你要保護的 API 可以像這樣：
-@app.get("/api/protected/example")
-@jwt_required()
-def example():
-    user_id = get_jwt_identity()
-    return jsonify({"message": "Hello from protected API", "userId": user_id})
 
 
 # ========== AQI Proxy API (保護你的私人金鑰) ==========
@@ -251,295 +242,109 @@ def submit_feedback():
     return jsonify({"message": "feedback saved"})
 
 
-
-# ========== Weather 公用函式 ==========
-
-def calculate_distance(lat1, lon1, lat2, lon2):
-    """計算兩個座標點之間的距離 (公里)"""
-    R = 6371  # 地球半徑 (公里)
-
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-
-    a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
-         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-         math.sin(dlon / 2) * math.sin(dlon / 2))
-
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    distance = R * c
-
-    return distance
-
-
-def get_weather_data():
-    """從中央氣象局取得天氣資料 (F-D0047-093)"""
-    try:
-        params = {
-            "Authorization": app.config["CWA_API_KEY"],
-            "format": "JSON"
-        }
-        response = requests.get(CWA_API_URL, params=params, timeout=10)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        print(f"Error fetching weather data: {e}")
-        return None
-
-
-def find_nearest_location(user_lat, user_lon, weather_data):
-    """找到最接近使用者位置的鄉鎮市區"""
-    if not weather_data or "records" not in weather_data:
-        return None
-
-    # 注意：官方實際欄位名可能是 "Locations" / "Location"
-    locations = weather_data["records"]["locations"][0]["location"]
-    nearest_location = None
-    min_distance = float('inf')
-
-    for location in locations:
-        # 取得該地區的經緯度
-        loc_lat = float(location["lat"])
-        loc_lon = float(location["lon"])
-
-        # 計算距離
-        distance = calculate_distance(user_lat, user_lon, loc_lat, loc_lon)
-
-        if distance < min_distance:
-            min_distance = distance
-            nearest_location = location
-
-    return nearest_location
-
-
-def parse_weather_info(location_data):
-    """解析天氣資料"""
-    if not location_data:
-        return None
-
-    weather_info = {
-        "locationName": location_data["locationName"],
-        "lat": location_data["lat"],
-        "lon": location_data["lon"],
-        "weatherElements": {}
-    }
-
-    # 解析各種天氣元素
-    for element in location_data["weatherElement"]:
-        element_name = element["elementName"]
-
-        # 取得最近時間的預報資料
-        if element["time"]:
-            time_data = element["time"][0]
-
-            if element_name == "Wx":  # 天氣現象
-                weather_info["weatherElements"]["weather"] = {
-                    "value": time_data["elementValue"][0]["value"],
-                    "startTime": time_data["startTime"],
-                    "endTime": time_data["endTime"]
-                }
-            elif element_name == "T":  # 溫度
-                weather_info["weatherElements"]["temperature"] = {
-                    "value": time_data["elementValue"][0]["value"],
-                    "unit": "°C",
-                    "startTime": time_data["startTime"],
-                    "endTime": time_data["endTime"]
-                }
-            elif element_name == "RH":  # 相對濕度
-                weather_info["weatherElements"]["humidity"] = {
-                    "value": time_data["elementValue"][0]["value"],
-                    "unit": "%",
-                    "startTime": time_data["startTime"],
-                    "endTime": time_data["endTime"]
-                }
-            elif element_name == "PoP12h":  # 12小時降雨機率
-                weather_info["weatherElements"]["rainProbability"] = {
-                    "value": time_data["elementValue"][0]["value"],
-                    "unit": "%",
-                    "startTime": time_data["startTime"],
-                    "endTime": time_data["endTime"]
-                }
-
-    return weather_info
-
-
-# ========== /api/weather：給「lat/lon」的版本 ==========
-
-@app.route('/api/weather', methods=['GET'])
-def get_weather():
-    """根據使用者位置取得天氣預報（lat/lon query string）"""
-    try:
-        # 從請求參數取得使用者位置
-        lat = request.args.get('lat', type=float)
-        lon = request.args.get('lon', type=float)
-
-        if lat is None or lon is None:
-            return jsonify({
-                "error": "缺少經緯度參數",
-                "message": "請提供 lat 和 lon 參數"
-            }), 400
-
-        # 取得天氣資料
-        weather_data = get_weather_data()
-        if not weather_data:
-            return jsonify({
-                "error": "無法取得天氣資料",
-                "message": "請檢查 API Key 是否正確"
-            }), 500
-
-        # 找到最近的地區
-        nearest_location = find_nearest_location(lat, lon, weather_data)
-        if not nearest_location:
-            return jsonify({
-                "error": "找不到附近的天氣資料"
-            }), 404
-
-        # 解析天氣資訊
-        weather_info = parse_weather_info(nearest_location)
-
-        return jsonify({
-            "success": True,
-            "data": weather_info
-        })
-
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "message": "伺服器錯誤"
-        }), 500
-
-
-# ========== /api/cwa93：給 WeatherPage.tsx 抓全台資料用 ==========
-@app.get("/api/cwa93")
-def get_cwa93():
+@app.route("/api/weather/today-range", methods=["GET"])
+def get_today_temp_range():
+    """
+    使用 CWA F-C0032-001 抓指定縣市「今天」的：
+    - maxTemp：最高溫
+    - minTemp：最低溫
+    - tempDiff：溫差
+    - pop12h：12 小時降雨機率（PoP12h）
+    - weatherDesc：天氣現象敘述（Wx）
+    """
     api_key = app.config.get("CWA_API_KEY")
     if not api_key:
-        return jsonify({"error": "後端未設定 CWA_API_KEY"}), 500
+        return jsonify({
+            "success": False,
+            "error": "Missing CWA_API_KEY in config"
+        }), 500
 
-    cwa_url = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-091"
+    # 前端傳來的縣市名稱，預設臺北市
+    location_name = request.args.get("locationName", "臺北市")
+
+    params = {
+        "Authorization": api_key,
+        "format": "JSON",
+        "locationName": location_name,
+    }
 
     try:
         resp = requests.get(
-            cwa_url,
-            params={"Authorization": api_key, "format": "JSON"},
-            timeout=12
+            "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001",
+            params=params,
+            timeout=10,
         )
-        print("[CWA93 DEBUG] status:", resp.status_code)
-        print("[CWA93 DEBUG] text:", resp.text[:500])  # 只印前 500 字避免太長
-
         resp.raise_for_status()
-        data = resp.json()
-        return jsonify(data)
-
-    except requests.exceptions.RequestException as e:
-        status = getattr(e.response, "status_code", 500)
-        body = getattr(e.response, "text", "")
-        print("[CWA93 ERROR] status:", status)
-        print("[CWA93 ERROR] body:", body[:500])
-        return jsonify({
-            "error": "CWA 93 API 回傳錯誤",
-            "status": status,
-            "body": body
-        }), 500
-
-    except Exception as e:
-        print("[CWA93 ERROR - OTHER]", repr(e))
-        return jsonify({"error": "取得 CWA93 失敗", "detail": str(e)}), 500
-
-@app.get("/api/weather/today-range")
-def get_today_temp_range():
-    location_name = request.args.get("locationName", "臺北市")
-
-    # ✅ 從 app.config 拿 API Key（上面已經設定過）
-    API_KEY = app.config.get("CWA_API_KEY")
-    if not API_KEY:
+    except requests.RequestException as e:
         return jsonify({
             "success": False,
-            "error": "後端未設定 CWA_API_KEY"
-        }), 500
+            "error": f"CWA F-C0032-001 request failed: {e}"
+        }), 502
 
-    url = (
-        "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001"
-        f"?Authorization={API_KEY}&locationName={location_name}"
-    )
-
-    try:
-        res = requests.get(url, timeout=10)
-        res.raise_for_status()
-        data = res.json()
-    except Exception as e:
-        print("[today-range] request error:", e)
+    data = resp.json()
+    locs = data.get("records", {}).get("location", [])
+    if not locs:
         return jsonify({
             "success": False,
-            "error": f"Request failed: {str(e)}"
-        }), 500
+            "error": "No location data in CWA response"
+        }), 404
 
-    try:
-        location_data = data["records"]["location"][0]
-        weather_elements = location_data["weatherElement"]
-    except (KeyError, IndexError) as e:
-        print("[today-range] parse error:", e)
-        return jsonify({
-            "success": False,
-            "locationName": location_name,
-            "maxTemp": None,
-            "minTemp": None,
-            "tempDiff": None,
-        }), 200
+    loc = locs[0]
+    weather_elements = loc.get("weatherElement", [])
 
-    # 使用台灣時間
-    tz_taipei = timezone(timedelta(hours=8))
-    today_str = datetime.now(tz_taipei).strftime("%Y-%m-%d")
+    # 小工具：依 elementName 找該項
+    def pick_element(name: str):
+        for el in weather_elements:
+            if el.get("elementName") == name:
+                return el
+        return None
 
-    max_list = []
-    min_list = []
+    # 以台灣時區判斷「今天」
+    tz = timezone(timedelta(hours=8))
+    today_str = datetime.now(tz).strftime("%Y-%m-%d")
 
-    print("=== [today-range] today_str =", today_str)
+    # 從某個 weatherElement 裡挑出「今天」的 parameterName
+    def pick_today_param(el):
+        if not el:
+            return None
+        for t in el.get("time", []):
+            start = t.get("startTime", "")
+            if start.startswith(today_str):
+                p = t.get("parameter", {})
+                return p.get("parameterName")
+        # 找不到今天就用第一筆當 fallback
+        times = el.get("time", [])
+        if times:
+            return times[0].get("parameter", {}).get("parameterName")
+        return None
 
-    # 走訪 F-C0032-001 的 MaxT / MinT
-    for element in weather_elements:
-        name = element.get("elementName")
-        time_list = element.get("time", [])
+    maxT_str = pick_today_param(pick_element("MaxT"))
+    minT_str = pick_today_param(pick_element("MinT"))
+    pop12h_str = pick_today_param(pick_element("PoP12h"))
+    wx_str = pick_today_param(pick_element("Wx"))
 
-        for t in time_list:
-            start_time = t.get("startTime", "")
-            date_part = start_time[:10]  # YYYY-MM-DD
+    def to_int_or_none(s):
+        try:
+            return int(s)
+        except (TypeError, ValueError):
+            return None
 
-            # debug 用
-            print("[today-range] start_time =", start_time)
+    max_temp = to_int_or_none(maxT_str)
+    min_temp = to_int_or_none(minT_str)
+    pop12h = to_int_or_none(pop12h_str)
 
-            if date_part != today_str:
-                continue
-
-            value = t.get("parameter", {}).get("parameterName")
-            if value is None:
-                continue
-
-            try:
-                value = float(value)
-            except ValueError:
-                continue
-
-            if name == "MaxT":
-                max_list.append(value)
-            elif name == "MinT":
-                min_list.append(value)
-
-    max_temp = max(max_list) if max_list else None
-    min_temp = min(min_list) if min_list else None
-    temp_diff = (
-        max_temp - min_temp
-        if max_temp is not None and min_temp is not None
-        else None
-    )
+    temp_diff = None
+    if max_temp is not None and min_temp is not None:
+        temp_diff = max_temp - min_temp
 
     return jsonify({
         "success": True,
-        "date": today_str,
-        "locationName": location_name,
+        "locationName": loc.get("locationName", location_name),
         "maxTemp": max_temp,
         "minTemp": min_temp,
         "tempDiff": temp_diff,
-        "queryLocationName": location_name
+        "pop12h": pop12h,          # 降雨機率（百分比）
+        "weatherDesc": wx_str,     # 天氣敘述文字
     })
 
 
@@ -607,6 +412,48 @@ def get_allergy_tips():
             "error": "Failed to generate allergy tips",
             "detail": str(e),
         }), 500
+
+# ========== AI Outfit Suggestion ==========
+
+@app.route("/api/ai/outfit", methods=["POST", "OPTIONS"])
+@cross_origin(
+    origins="http://localhost:5173",
+    supports_credentials=True
+)
+@jwt_required()
+def get_outfit_suggestion():
+    body = request.get_json() or {}
+    api_key = body.get("geminiApiKey")
+    env = body.get("env") or {}
+
+    today_env = {
+        "tempMin": env.get("tempMin"),
+        "tempMax": env.get("tempMax"),
+        "rainPop": env.get("rainPop"),
+        "weatherDesc": env.get("weatherDesc"),
+        "aqi": env.get("aqi"),
+    }
+
+    prompt = build_outfit_prompt(today_env)
+
+    try:
+        lines = call_gemini(api_key, prompt)
+
+        return jsonify({
+            "success": True,
+            "top":    lines[0] if len(lines) > 0 else "",
+            "outer":  lines[1] if len(lines) > 1 else "",
+            "bottom": lines[2] if len(lines) > 2 else "",
+            "note":   lines[3] if len(lines) > 3 else "",
+        })
+
+    except Exception as e:
+        print("Gemini outfit error:", repr(e))
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 
 # ========== Health Check ==========
 

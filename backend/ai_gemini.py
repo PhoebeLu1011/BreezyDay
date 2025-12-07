@@ -5,7 +5,7 @@ import requests
 from requests.exceptions import HTTPError
 
 #  model 名稱
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
 
 
 def build_allergy_prompt(feedbacks: List[Dict], today_env: Dict) -> str:
@@ -110,6 +110,53 @@ def _extract_text_from_gemini_response(resp_json: Dict) -> str:
     return "\n".join(texts).strip()
 
 
+
+def build_outfit_prompt(today_env: Dict) -> str:
+    """
+    產生給 Gemini 使用的「穿搭建議」 Prompt。
+    today_env: {
+        "tempMin": ...,
+        "tempMax": ...,
+        "rainPop": ...,
+        "weatherDesc": ...,
+        "aqi": ...
+    }
+    """
+
+    t_min = today_env.get("tempMin")
+    t_max = today_env.get("tempMax")
+    rain = today_env.get("rainPop")
+    desc = today_env.get("weatherDesc")
+    aqi = today_env.get("aqi")
+
+    prompt = f"""
+    You are an outfit recommendation assistant for a weather dashboard.
+
+    Today's environment:
+    - Min temperature: {t_min} °C
+    - Max temperature: {t_max} °C
+    - Rain probability: {rain}%
+    - Weather description: {desc}
+    - AQI: {aqi}
+
+    Task:
+    Return EXACTLY FOUR lines:
+    Line 1 → ONE topwear item (e.g., "Long-sleeved shirt")
+    Line 2 → ONE outerwear item (e.g., "Light jacket", "No outerwear needed")
+    Line 3 → ONE bottomwear item (e.g., "Jeans", "Shorts")
+    Line 4 → ONE short note about special considerations
+             (e.g., layering, waterproof gear, wind, sudden temp drop)
+
+    Rules:
+    - English only
+    - No numbering
+    - No additional explanations
+    - Each line MUST be exactly one item or one short sentence.
+    """
+
+    return textwrap.dedent(prompt).strip()
+
+
 def call_gemini(api_key: str, prompt: str, model: str = DEFAULT_GEMINI_MODEL) -> List[str]:
     """
     用指定的 api_key 呼叫 Gemini，根據 prompt 取得建議。
@@ -147,6 +194,6 @@ def call_gemini(api_key: str, prompt: str, model: str = DEFAULT_GEMINI_MODEL) ->
     if not text:
         return []
 
-    # ⭐ 從 3 行改成 5 行
+    #  5 行
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     return lines[:5]

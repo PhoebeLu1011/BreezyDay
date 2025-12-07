@@ -9,9 +9,7 @@ import AQIPage from "./features/aqi/AQIPage";
 import ProfilePage from "./pages/ProfilePage";
 import FeedbackPage from "./pages/FeedbackPage";
 import FeedbackHistoryPage from "./pages/FeedbackHistoryPage";   
-import WeatherPage from "./features/weather/WeatherPage";
 import TopNav from "./components/TopNav";
-import RainChance from "./features/rain_chance/RainChance";
 
 type Page =
   | "landing"
@@ -20,9 +18,7 @@ type Page =
   | "aqi"
   | "profile"
   | "feedback"
-  | "feedbackHistory"   
-  | "weather"
-  | "rain";
+  | "feedbackHistory";
 
 const STORAGE_KEY = "breezyday_last_page";
 
@@ -42,11 +38,9 @@ export default function App() {
       if (
         saved === "dashboard" ||
         saved === "aqi" ||
-        saved === "weather" ||
         saved === "profile" ||
         saved === "feedback" ||
-        saved === "feedbackHistory" ||   // ⭐ 新增
-        saved === "rain"
+        saved === "feedbackHistory" 
       ) {
         setPage(saved);
       } else {
@@ -98,9 +92,6 @@ export default function App() {
 
         {page === "aqi" && <AQIPage />}
 
-        {page === "weather" && (
-          <WeatherPage onBack={() => go("dashboard")} />
-        )}
 
         {page === "profile" && (
           <ProfilePage
@@ -115,10 +106,6 @@ export default function App() {
 
         {page === "feedbackHistory" && (   
           <FeedbackHistoryPage onBack={() => go("profile")} />
-        )}
-
-        {page === "rain" && (
-          <RainChance onBack={() => go("dashboard")} />
         )}
 
       </div>
