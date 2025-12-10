@@ -1,3 +1,20 @@
+/* src/styles/global.css */
+
+/* 1. 引入 Inter 字體 (如果你的 index.html 裡還沒引入的話) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* 2. 設定全域字體為 Inter */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased; /* 讓字體在 Mac 上更滑順 */
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50; /* 統一全站文字顏色為深藍灰色 */
+}
+
+/* 統一所有按鈕和輸入框的字體 */
+button, input, textarea, select {
+  font-family: inherit;
+}
 :root {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Noto Sans TC", sans-serif;

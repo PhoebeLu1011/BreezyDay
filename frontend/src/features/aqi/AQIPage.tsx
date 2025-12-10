@@ -1,315 +1,301 @@
 // src/features/aqi/AQIPage.tsx
-import { useEffect, useMemo, useState } from "react";
-import AQIDashboard from "./AQIDashboard";
-import PollutantCards from "./PollutantCards";
-import PollutantChart from "./PollutantChart";
-import AQITable from "./AQITable";
-import type { StationRow, SortKey } from "./aqiTypes";
-import {
-  aqiClass,
-  getAqiCategory,
-  getAqiInfo,
-  findNearestStation,
-} from "./aqiUtils";
-import "./aqi.css";
+import { useState, useEffect } from "react";
 
-// ✅ 從這裡開始改：改成打自己的後端，而不是直接打環境部
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-const AQI_API_URL = `${API_BASE_URL}/api/aqi`;
+export default function AQIPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-const AQIPage: React.FC = () => {
-  const [rows, setRows] = useState<StationRow[]>([]);
-  const [currentStation, setCurrentStation] = useState<StationRow | null>(null);
-  const [watchedStations, setWatchedStations] = useState<StationRow[]>([]);
-  const [keyword, setKeyword] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("aqi");
-  const [levelFilter, setLevelFilter] = useState<"all" | string>("all");
-  const [statusText, setStatusText] = useState("載入中...");
-  const [loading, setLoading] = useState(false);
-
-  // ⭐ 新增：控制是「儀表板模式」還是「表格模式」
-  const [viewMode, setViewMode] = useState<"dashboard" | "table">("dashboard");
-
-  // 抓 API（打自己的 Flask 後端）
-  const loadData = async (initial = false) => {
-    setLoading(true);
-    setStatusText("資料載入中...");
-    try {
-      const res = await fetch(AQI_API_URL, {
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      const mapped: StationRow[] = (data?.records ?? []).map((r: any) => ({
-        county: r.county || "",
-        site: r.sitename || r.SiteName || "",
-        aqi: r.aqi || "",
-        pm25: toNum(r["pm2.5"] ?? r.pm2_5),
-        pm10: toNum(r.pm10 ?? r.PM10),
-        o3: toNum(r.o3 ?? r.O3),
-        so2: toNum(r.so2 ?? r.SO2),
-        status: r.status ?? r.Status ?? "",
-        publishTime: r.publishtime || r.PublishTime || "",
-        lat: numOrNull(r.latitude ?? r.Latitude),
-        lon: numOrNull(r.longitude ?? r.Longitude),
-      }));
-
-      setRows(mapped);
-
-      // 預設主卡片：優先台北市，沒有就第一筆
-      let defaultStation =
-        mapped.find(
-          (r) =>
-            r.county.includes("北市") ||
-            r.county.includes("臺北") ||
-            r.county.includes("台北"),
-        ) || mapped[0];
-
-      setCurrentStation(defaultStation ?? null);
-
-      setStatusText(
-        `顯示 ${mapped.length} 筆資料（來源：環境部即時空氣品質，更新時間：${new Date().toLocaleTimeString()}）`,
-      );
-
-      if (initial) {
-        autoLocateOnLoad(mapped);
-      }
-    } catch (err) {
-      console.error(err);
-      setStatusText("讀取失敗，請稍後再試，或聯絡系統管理員。");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 首次載入 + 每 5 分鐘更新一次
   useEffect(() => {
-    loadData(true);
-    const id = setInterval(() => loadData(false), 5 * 60 * 1000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 模擬載入數據
+    const timer = setTimeout(() => {
+      setData({
+        aqi: 42,
+        status: "Good",
+        station: "Taipei City Hall",
+        // 詳細污染物數據
+        pm25: 12,
+        pm10: 28,
+        o3: 35,
+        so2: 3,
+        // 狀態顏色 (模擬)
+        pm25Status: "Moderate",
+        pm10Status: "Moderate",
+        o3Status: "Good",
+        so2Status: "Good"
+      });
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
   }, []);
 
-  // auto locate（頁面第一次載入就試一次）
-  const autoLocateOnLoad = (dataRows: StationRow[]) => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const nearest = findNearestStation(latitude, longitude, dataRows);
-        if (nearest) {
-          setCurrentStation(nearest);
-        }
-      },
-      (err) => {
-        console.log("auto locate failed:", err);
-      },
-      { enableHighAccuracy: true, timeout: 5000 },
-    );
-  };
-
-  const handleCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert("瀏覽器不支援定位功能");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const nearest = findNearestStation(latitude, longitude, rows);
-        if (nearest) {
-          setCurrentStation(nearest);
-        } else {
-          alert("附近找不到可用測站");
-        }
-      },
-      (err) => {
-        console.error(err);
-        alert("定位失敗：" + err.message);
-      },
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
-  };
-
-  const handleAddCity = () => {
-    const kw = window.prompt("請輸入縣市或測站名稱關鍵字：");
-    if (!kw) return;
-    const key = kw.trim().toLowerCase();
-    const station = rows.find(
-      (r) =>
-        r.county.toLowerCase().includes(key) ||
-        r.site.toLowerCase().includes(key),
-    );
-    if (!station) {
-      alert("找不到符合的測站，請試試其他關鍵字");
-      return;
-    }
-    if (
-      watchedStations.some(
-        (s) => s.site === station.site && s.county === station.county,
-      )
-    ) {
-      alert("這個測站已在列表中");
-      return;
-    }
-    setWatchedStations((prev) => [...prev, station]);
-  };
-
-  const handleRemoveWatched = (index: number) => {
-    setWatchedStations((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleResetFilters = () => {
-    setKeyword("");
-    setSortKey("aqi");
-    setLevelFilter("all");
-  };
-
-  const filteredRows = useMemo(() => {
-    let list = rows.filter((r) => {
-      const kw = keyword.trim().toLowerCase();
-      if (
-        kw &&
-        !r.county.toLowerCase().includes(kw) &&
-        !r.site.toLowerCase().includes(kw)
-      ) {
-        return false;
-      }
-      if (levelFilter !== "all") {
-        const cat = getAqiCategory(r.aqi);
-        if (cat !== levelFilter) return false;
-      }
-      return true;
-    });
-
-    list = list.sort((a, b) => {
-      if (sortKey === "site") {
-        return a.site.localeCompare(b.site, "zh-Hant");
-      }
-      const key = sortKey as "aqi" | "pm25" | "pm10";
-      const av = key === "aqi" ? Number(a.aqi) || 0 : a[key] ?? 0;
-      const bv = key === "aqi" ? Number(b.aqi) || 0 : b[key] ?? 0;
-      return bv - av;
-    });
-
-    return list;
-  }, [rows, keyword, sortKey, levelFilter]);
-
-  // 目前站台的污染物數值
-  const currentPollutants = useMemo(() => {
-    if (!currentStation) {
-      return { pm25: NaN, pm10: NaN, o3: NaN, so2: NaN };
-    }
-    return {
-      pm25: currentStation.pm25 ?? NaN,
-      pm10: currentStation.pm10 ?? NaN,
-      o3: currentStation.o3 ?? NaN,
-      so2: currentStation.so2 ?? NaN,
-    };
-  }, [currentStation]);
-
-  const mainInfo = currentStation ? getAqiInfo(currentStation.aqi) : null;
-  const locationText = currentStation
-    ? `${currentStation.county || ""} ${currentStation.site || ""}`.trim()
-    : "未知測站";
-
   return (
-    <div className="page">
-      {viewMode === "dashboard" ? (
-        <>
-          {/* 上半部 Dashboard（主卡片 + 污染物卡片 + 圖表） */}
-          <section className="top-section">
-            <AQIDashboard
-              locationText={locationText}
-              aqiValue={currentStation?.aqi ?? "--"}
-              aqiInfo={mainInfo}
-              aqiClassName={
-                mainInfo
-                  ? `level-status ${mainInfo.className}`
-                  : "level-status"
-              }
-              barPercent={
-                currentStation
-                  ? Math.min(
-                      100,
-                      ((Number(currentStation.aqi) || 0) / 300) * 100,
-                    )
-                  : 0
-              }
-              onCurrentLocation={handleCurrentLocation}
-              onAddCity={handleAddCity}
-              watchedStations={watchedStations}
-              onClickWatched={(station) => setCurrentStation(station)}
-              onRemoveWatched={handleRemoveWatched}
-              // ⭐ 點這顆按鈕 → 切去 Table 畫面
-              onGoTable={() => setViewMode("table")}
-            />
+    <div className="container mt-4 mb-5" style={{ maxWidth: "1100px" }}>
+      
+      <style>{`
+        /* 上半部：詳細數據大面板 */
+        .glass-panel-detail {
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
 
-            {/* Main Pollutants Today */}
-            <PollutantCards
-              pm25={currentPollutants.pm25}
-              pm10={currentPollutants.pm10}
-              o3={currentPollutants.o3}
-              so2={currentPollutants.so2}
-            />
+        /* 下半部：污染物專用卡片樣式 */
+        .pollutant-card {
+          border-radius: 20px;
+          padding: 1.5rem;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          border: 1px solid rgba(0,0,0,0.03);
+          transition: transform 0.2s;
+        }
+        .pollutant-card:hover {
+          transform: translateY(-3px);
+        }
 
-            {/* Pollutant Chart */}
-            <PollutantChart
-              pm25={currentPollutants.pm25}
-              pm10={currentPollutants.pm10}
-              o3={currentPollutants.o3}
-              so2={currentPollutants.so2}
-            />
-          </section>
-        </>
-      ) : (
-        <>
-          {/* Table 模式：上面一個「回儀表板」按鈕 + 全螢幕 AQITable */}
-          <div style={{ marginBottom: "16px" }}>
-            <button
-              className="btn btn-link"
-              onClick={() => setViewMode("dashboard")}
-            >
-              ← 回 AQI 儀表板
-            </button>
+        /* 顏色主題：橘色系 (Moderate) */
+        .bg-orange-light {
+          background-color: #FFF8E1;
+        }
+        .badge-orange {
+          background-color: #FFE0B2;
+          color: #E65100;
+          font-size: 0.75rem;
+          padding: 4px 12px;
+          border-radius: 6px; /* 方圓角，比較整齊 */
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }
+
+        /* 顏色主題：綠色系 (Good) */
+        .bg-green-light {
+          background-color: #E6FFFA;
+        }
+        .badge-green {
+          background-color: #B2F5EA;
+          color: #006d5b;
+          font-size: 0.75rem;
+          padding: 4px 12px;
+          border-radius: 6px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }
+
+        /* 按鈕樣式 */
+        .glass-btn {
+          background: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          color: #333;
+          border-radius: 50px;
+          padding: 8px 24px;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 500;
+          font-size: 0.9rem;
+          transition: all 0.2s;
+        }
+        .glass-btn:hover {
+          background: #333;
+          color: #fff;
+        }
+        .glass-btn-primary {
+          background: #2c3e50;
+          color: white;
+          border: none;
+        }
+      `}</style>
+
+      {/* 標題列 */}
+      <div className="d-flex justify-content-between align-items-end mb-4 px-2">
+        <div>
+          <h2 className="fw-bold mb-1" style={{ fontFamily: "'Playfair Display', serif", fontSize: "2.2rem", color: "#2c3e50" }}>
+            Air Quality Monitor
+          </h2>
+          <p className="text-secondary mb-0" style={{ fontFamily: "'Poppins', sans-serif", fontSize: "0.95rem" }}>
+            Real-time monitoring for <span className="fw-bold text-dark">{loading ? "..." : data?.station}</span>
+          </p>
+        </div>
+        <div className="d-flex gap-2">
+           <button className="glass-btn glass-btn-primary">📍 Current Location</button>
+           <button className="glass-btn">+ Add City</button>
+        </div>
+      </div>
+
+      {/* 1. 上半部：詳細數據大面板 */}
+      <div className="glass-panel-detail p-5 mb-5">
+        <div className="row align-items-center">
+          {/* 左側：AQI 大圓圈 */}
+          <div className="col-md-5 text-center border-end border-secondary-subtle">
+            <h6 className="text-uppercase text-secondary fw-bold mb-4" style={{ letterSpacing: '2px', fontSize: '0.8rem', fontFamily: "'Poppins', sans-serif" }}>
+              Current AQI
+            </h6>
+            <div className="d-inline-flex flex-column justify-content-center align-items-center rounded-circle" 
+                 style={{ 
+                   background: loading ? '#f0f0f0' : '#e6fffa',
+                   width: '200px', height: '200px',
+                   boxShadow: 'inset 0 0 30px rgba(0,128,96,0.15)'
+                 }}>
+               {loading ? (
+                 <span className="spinner-border text-secondary"></span>
+               ) : (
+                 <>
+                   <div className="display-1 fw-bold" style={{ color: '#008060', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-2px' }}>
+                     {data?.aqi}
+                   </div>
+                   <div className="fw-bold fs-4" style={{ color: '#008060', fontFamily: "'Poppins', sans-serif" }}>
+                     {data?.status}
+                   </div>
+                 </>
+               )}
+            </div>
+            <p className="small text-muted mt-3 font-monospace">Updated just now</p>
           </div>
 
-          <AQITable
-            rows={filteredRows}
-            rawRowsCount={rows.length}
-            keyword={keyword}
-            sortKey={sortKey}
-            levelFilter={levelFilter}
-            onKeywordChange={setKeyword}
-            onSortKeyChange={setSortKey}
-            onLevelFilterChange={setLevelFilter}
-            onRefresh={() => loadData(false)}
-            onReset={handleResetFilters}
-            statusText={statusText}
-            loading={loading}
-            onSelectRow={(r) => {
-              setCurrentStation(r);
-            }}
-            aqiClass={aqiClass}
-          />
-        </>
-      )}
+          {/* 右側：健康建議 */}
+          <div className="col-md-7 ps-md-5">
+             <h4 className="fw-bold mb-3" style={{ color: '#2c3e50', fontFamily: "'Playfair Display', serif" }}>
+                Health Advice
+             </h4>
+             <p className="text-secondary" style={{ lineHeight: '1.8', fontSize: '1rem' }}>
+                The air quality is generally acceptable for most people. However, sensitive groups may experience minor health effects. It's a great day to enjoy outdoor activities!
+             </p>
+             <div className="mt-4 p-3 rounded-4 bg-white bg-opacity-50 border border-light d-flex align-items-center gap-3">
+                <span style={{ fontSize: '1.5rem' }}>🏃</span>
+                <div>
+                    <strong className="d-block text-dark">Outdoor Activities</strong>
+                    <span className="small text-muted">Good for walking, running, and cycling.</span>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. 下半部：Main Pollutants Today (PM2.5, PM10, O3, SO2) */}
+      <h5 className="fw-bold mb-3 ps-2" style={{ color: '#2c3e50', fontFamily: "'Playfair Display', serif" }}>
+        Main Pollutants Today
+      </h5>
+      <div className="row g-4">
+        
+        {/* 卡片 1: PM2.5 (橘色系) */}
+        <div className="col-md-6 col-lg-3">
+          <div className="pollutant-card bg-orange-light">
+            {/* 🌟 修改：標題與 Badge 獨立一行，確保垂直置中對齊 */}
+            <div className="d-flex justify-content-between align-items-center mb-1">
+               <h6 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>PM2.5</h6>
+               <span className="badge-orange">Moderate</span>
+            </div>
+            {/* 副標題獨立一行 */}
+            <div className="small text-secondary mb-3">Fine Particles</div>
+            
+            <div className="mb-3 d-flex align-items-baseline">
+               <span className="display-6 fw-bold text-dark" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                 {loading ? "--" : data?.pm25}
+               </span>
+               <span className="small text-muted ms-2 fw-bold" style={{ fontSize: '0.8rem' }}>µg/m³</span>
+            </div>
+
+            {/* 進度條 */}
+            <div>
+               <div className="progress" style={{ height: '6px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: '10px' }}>
+                  <div className="progress-bar bg-warning" role="progressbar" style={{ width: '45%', borderRadius: '10px' }}></div>
+               </div>
+               <div className="d-flex justify-content-between mt-2">
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>0</span>
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>Standard: 35 µg/m³</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 卡片 2: PM10 (橘色系) */}
+        <div className="col-md-6 col-lg-3">
+          <div className="pollutant-card bg-orange-light">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+               <h6 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>PM10</h6>
+               <span className="badge-orange">Moderate</span>
+            </div>
+            <div className="small text-secondary mb-3">Coarse Particles</div>
+            
+            <div className="mb-3 d-flex align-items-baseline">
+               <span className="display-6 fw-bold text-dark" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                 {loading ? "--" : data?.pm10}
+               </span>
+               <span className="small text-muted ms-2 fw-bold" style={{ fontSize: '0.8rem' }}>µg/m³</span>
+            </div>
+
+             <div>
+               <div className="progress" style={{ height: '6px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: '10px' }}>
+                  <div className="progress-bar bg-warning" role="progressbar" style={{ width: '30%', borderRadius: '10px' }}></div>
+               </div>
+               <div className="d-flex justify-content-between mt-2">
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>0</span>
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>Standard: 100 µg/m³</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 卡片 3: O3 (綠色系) */}
+        <div className="col-md-6 col-lg-3">
+          <div className="pollutant-card bg-green-light">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+               <h6 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>O<sub>3</sub></h6>
+               <span className="badge-green">Good</span>
+            </div>
+            <div className="small text-secondary mb-3">Ozone</div>
+            
+            <div className="mb-3 d-flex align-items-baseline">
+               <span className="display-6 fw-bold text-dark" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                 {loading ? "--" : data?.o3}
+               </span>
+               <span className="small text-muted ms-2 fw-bold" style={{ fontSize: '0.8rem' }}>ppb</span>
+            </div>
+
+             <div>
+               <div className="progress" style={{ height: '6px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: '10px' }}>
+                  <div className="progress-bar bg-success" role="progressbar" style={{ width: '20%', borderRadius: '10px' }}></div>
+               </div>
+               <div className="d-flex justify-content-between mt-2">
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>0</span>
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>Standard: 70 ppb</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 卡片 4: SO2 (綠色系) */}
+        <div className="col-md-6 col-lg-3">
+          <div className="pollutant-card bg-green-light">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+               <h6 className="fw-bold mb-0 text-dark" style={{fontSize: '1.1rem'}}>SO<sub>2</sub></h6>
+               <span className="badge-green">Good</span>
+            </div>
+            <div className="small text-secondary mb-3">Sulfur Dioxide</div>
+            
+            <div className="mb-3 d-flex align-items-baseline">
+               <span className="display-6 fw-bold text-dark" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                 {loading ? "--" : data?.so2}
+               </span>
+               <span className="small text-muted ms-2 fw-bold" style={{ fontSize: '0.8rem' }}>ppb</span>
+            </div>
+
+             <div>
+               <div className="progress" style={{ height: '6px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: '10px' }}>
+                  <div className="progress-bar bg-success" role="progressbar" style={{ width: '10%', borderRadius: '10px' }}></div>
+               </div>
+               <div className="d-flex justify-content-between mt-2">
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>0</span>
+                  <span className="small text-muted" style={{fontSize: '0.7rem'}}>Standard: 20 ppb</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      
     </div>
   );
-};
-
-function toNum(v: any): number | null {
-  if (v === "" || v === null || v === undefined) return null;
-  const n = Number(v);
-  return Number.isNaN(n) ? null : n;
 }
-
-function numOrNull(v: any): number | null {
-  if (v === "" || v === null || v === undefined) return null;
-  const n = parseFloat(v);
-  return Number.isNaN(n) ? null : n;
-}
-
-export default AQIPage;

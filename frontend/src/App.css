@@ -1,42 +1,140 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* 引入字體 */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+/* 全螢幕容器 */
+.landing-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Lora', serif;
+  /* 這裡不需要背景色，因為會透出 App 最底層的雲朵背景 */
+}
+
+/* 毛玻璃卡片 */
+.landing-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 48px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* 標題與 Logo */
+.landing-header {
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.landing-logo-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.landing-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: -1px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.landing-subtitle {
+  font-style: italic;
+  color: #64748b;
+  margin-top: 8px;
+  font-size: 16px;
 }
 
-.card {
-  padding: 2em;
+/* 表單 */
+.landing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.read-the-docs {
-  color: #888;
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-wrapper label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-left: 4px;
+}
+
+.landing-input {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.5);
+  font-family: 'Lora', serif;
+  font-size: 16px;
+  color: #334155;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.landing-input:focus {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 4px rgba(203, 213, 225, 0.4);
+}
+
+/* 按鈕 */
+.landing-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 16px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-family: 'Lora', serif;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 20px -5px rgba(30, 41, 59, 0.3);
+  transition: transform 0.1s;
+}
+
+.landing-btn:active {
+  transform: scale(0.98);
+}
+
+/* 底部切換文字 */
+.landing-footer {
+  text-align: center;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-family: 'Lora', serif;
+  font-style: italic;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.toggle-btn:hover {
+  color: #1e293b;
+  text-decoration-color: #1e293b;
 }

@@ -1,114 +1,91 @@
-// src/App.tsx
 import { useState, useEffect } from "react";
-import { useAuth } from "./context/AuthContext";
+// 1. 引入真正的 AuthProvider 和 useAuth
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
-import Landing from "./pages/Landing";
-import AuthPage from "./pages/AuthPage";
+// 引入你的頁面元件 (請確認路徑正確)
+import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
-import AQIPage from "./features/aqi/AQIPage";
 import ProfilePage from "./pages/ProfilePage";
 import FeedbackPage from "./pages/FeedbackPage";
-import FeedbackHistoryPage from "./pages/FeedbackHistoryPage";   
-import TopNav from "./components/TopNav";
+import FeedbackHistory from "./pages/FeedbackHistoryPage";
+// ... 其他 import
 
-type Page =
-  | "landing"
-  | "auth"
-  | "dashboard"
-  | "aqi"
-  | "profile"
-  | "feedback"
-  | "feedbackHistory";
+// 定義頁面類型
+type Page = "landing" | "dashboard" | "profile" | "feedback" | "history";
 
-const STORAGE_KEY = "breezyday_last_page";
-
-export default function App() {
+// 2. 建立一個內部元件來處理邏輯 (原本 App 的內容搬到這)
+function AppContent() {
+  // 使用真正的 useAuth (會自動去問後端有沒有登入)
   const { user, loading } = useAuth();
+  
   const [page, setPage] = useState<Page>("landing");
+  const [weatherType] = useState<'sunny' | 'cloudy' | 'rainy' | 'night'>('sunny');
 
-  // -------- Restore last page --------
+  // 3. 監聽 user 狀態：自動切換頁面
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      setPage("landing");
-      localStorage.removeItem(STORAGE_KEY);
+    if (user) {
+      // 如果 user 存在 (已登入)，跳轉到 Dashboard
+      setPage("dashboard");
     } else {
-      const saved = localStorage.getItem(STORAGE_KEY) as Page | null;
-      if (
-        saved === "dashboard" ||
-        saved === "aqi" ||
-        saved === "profile" ||
-        saved === "feedback" ||
-        saved === "feedbackHistory" 
-      ) {
-        setPage(saved);
-      } else {
-        setPage("dashboard");
-      }
+      // 如果沒有 user (未登入/登出)，跳轉到 Landing
+      setPage("landing");
     }
-  }, [user, loading]);
+  }, [user]); // 當 user 狀態改變時執行
 
+  // 4. 處理 Loading 狀態 (避免畫面閃爍)
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "1.2rem",
-        }}
-      >
+      <div style={{ height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
         Loading...
       </div>
     );
   }
 
-  // ---------- navigate ----------
-  const go = (p: Page) => {
-    setPage(p);
-    if (p !== "landing" && p !== "auth") {
-      localStorage.setItem(STORAGE_KEY, p);
-    }
-  };
-
-  // ---------- visitor ----------
-  if (!user) {
-    if (page === "auth") {
-      return <AuthPage onAuthSuccess={() => go("dashboard")} />;
-    }
-    return <Landing onEnter={() => go("auth")} />;
-  }
-
-  // ---------- logged-in ----------
+  // 5. 頁面渲染邏輯
   return (
     <>
-      <TopNav onNavigate={go} />
+      {/* 背景樣式與天氣效果 (保留你原本的) */}
+      <div className={`app-container ${weatherType}`}>
+        
+        {/* 如果沒登入 -> 顯示 Landing */}
+        {!user && (
+           <LandingPage onEnter={() => {}} /> 
+           // 註：現在登入邏輯在 Landing 內部自己處理，這裡的 onEnter 其實用不到了，但為了不報錯先留著
+        )}
 
-      <div style={{ paddingTop: "70px" }}>
-
-        {page === "dashboard" && <Dashboard onNavigate={go} />}
-
-        {page === "aqi" && <AQIPage />}
-
-
-        {page === "profile" && (
-          <ProfilePage
-            onBack={() => go("dashboard")}
-            onViewFeedback={() => go("feedbackHistory")}   
+        {/* 如果已登入 -> 依 page 顯示對應頁面 */}
+        {user && page === "dashboard" && (
+          <Dashboard 
+            toProfile={() => setPage("profile")}
+            toFeedback={() => setPage("feedback")}
           />
         )}
 
-        {page === "feedback" && (
-          <FeedbackPage onBack={() => go("dashboard")} />
+        {user && page === "profile" && (
+          <ProfilePage 
+            onBack={() => setPage("dashboard")}
+            toHistory={() => setPage("history")}
+          />
         )}
 
-        {page === "feedbackHistory" && (   
-          <FeedbackHistoryPage onBack={() => go("profile")} />
+        {user && page === "feedback" && (
+          <FeedbackPage onBack={() => setPage("dashboard")} />
+        )}
+        
+        {user && page === "history" && (
+          <FeedbackHistory onBack={() => setPage("profile")} />
         )}
 
       </div>
     </>
+  );
+}
+
+// 6. 最外層的 App：負責包上 AuthProvider
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

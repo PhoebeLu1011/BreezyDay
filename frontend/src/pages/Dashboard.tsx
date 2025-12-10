@@ -1,569 +1,71 @@
-// src/pages/Dashboard.tsx
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-
+import { useState, useEffect } from "react";
 import "../styles/Dashboard.css";
-import { getAqiInfo, findNearestStation } from "../features/aqi/aqiUtils";
-import type { StationRow } from "../features/aqi/aqiTypes";
 
-// 跟 App.tsx 相同的 Page 型別
-type Page =
-  | "landing"
-  | "auth"
-  | "dashboard"
-  | "aqi"
-  | "profile"
-  | "feedback"
-  | "feedbackHistory";
-
-// 定義 props 型別
-type DashboardProps = {
-  onNavigate: (page: Page) => void;
-};
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-const AQI_API_URL = `${API_BASE_URL}/api/aqi`;
-const WEATHER_TODAY_URL = `${API_BASE_URL}/api/weather/today-range`;
-
-// 依照 AQI label 決定用哪個顏色 class
-function mapAqiLabelToClass(label: string | null): string {
-  if (!label) return "badge-warning";
-
-  const l = label.toLowerCase();
-  if (l.includes("good")) return "badge-aqi-good";
-  if (l.includes("moderate")) return "badge-aqi-moderate";
-  if (l.includes("very unhealthy")) return "badge-aqi-very";
-  if (l.includes("unhealthy for sensitive")) return "badge-aqi-usg";
-  if (l.includes("hazardous")) return "badge-aqi-hazard";
-  if (l.includes("unhealthy")) return "badge-aqi-unhealthy";
-
-  // 如果之後你改成中文 label，可以在這裡再加條件
-  return "badge-warning";
+// 定義 Props
+interface DashboardProps {
+  toProfile: () => void;
+  toFeedback: () => void;
 }
 
-type AllergyRisk = "loading" | "low" | "moderate" | "dangerous" | "unknown";
-
-// 根據 AQI 數值決定過敏風險
-function getAllergyRiskFromAqiValue(aqi: number | null): AllergyRisk {
-  if (aqi === null) return "loading";
-
-  // 你可以自己微調區間
-  if (aqi <= 50) return "low"; // good
-  if (aqi <= 100) return "low"; // moderate -> low（照你剛剛的箭頭）
-  if (aqi <= 150) return "moderate"; // USG
-  // 以上都不是 -> unhealthy 以上都算 dangerous
-  return "dangerous";
-}
-
-// 根據 risk 決定加在 .badge 後面的 class
-function getAllergyRiskClass(risk: AllergyRisk): string {
-  switch (risk) {
-    case "low":
-      return "badge-risk-low";
-    case "moderate":
-      return "badge-risk-moderate";
-    case "dangerous":
-      return "badge-risk-dangerous";
-    case "loading":
-      return "badge-risk-unknown";
-    default:
-      return "badge-risk-unknown";
-  }
-}
-
-export default function Dashboard({ onNavigate }: DashboardProps) {
-  const { token } = useAuth();
-
-  const today = useMemo(
-    () =>
-      new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      }),
-    []
-  );
-
-  // Good / Moderate / Unhealthy...
-  const [aqiLabel, setAqiLabel] = useState<string | null>(null);
-  const [aqiLevelClass, setAqiLevelClass] =
-    useState<string>("badge-warning");
-
-  //  AQI 數值（給 Allergy Risk + AI 用）
-  const [aqiValue, setAqiValue] = useState<number | null>(null);
-
-  // 今日溫度資訊
-  const [tempLocation, setTempLocation] = useState<string>("");
-  const [tempMin, setTempMin] = useState<number | null>(null);
-  const [tempMax, setTempMax] = useState<number | null>(null);
-  const [tempDiff, setTempDiff] = useState<number | null>(null);
-
-  // 今日降雨機率 + 天氣敘述
-  const [rainPop, setRainPop] = useState<number | null>(null);
-  const [weatherDesc, setWeatherDesc] = useState<string>("");
-
-  //  AI Allergy Tips（Gemini)
-  const [aiTips, setAiTips] = useState<string[]>([]);
-  const [loadingTips, setLoadingTips] = useState(false);
+export default function Dashboard({ toProfile, toFeedback }: DashboardProps) {
+  const [loading, setLoading] = useState(true);
+  const [suggestionText, setSuggestionText] = useState("Analyzing weather data...");
+  const [avatarUrl, setAvatarUrl] = useState("https://api.dicebear.com/7.x/notionists/svg?seed=Felix");
   
-  //  AI Outfit（Gemini）
-  const [aiTop, setAiTop] = useState("");
-  const [aiOuter, setAiOuter] = useState("");
-  const [aiBottom, setAiBottom] = useState("");
-  const [aiNote, setAiNote] = useState("");
-
-  // 顯示用的名字
-  const [displayName, setDisplayName] = useState<string>("");
-
-  // ===== 呼叫後端 /api/ai/allergy-tips，取得 Gemini 建議 =====
-  const loadAiAllergyTips = async (
-    aqi: number | null,
-    minT: number | null,
-    maxT: number | null
-  ) => {
-    const apiKey = localStorage.getItem("geminiApiKey");
-    if (!apiKey) {
-      console.warn("No Gemini API key found in localStorage");
-      return;
-    }
-    if (!token) {
-      console.warn("No auth token, skip AI tips");
-      return;
-    }
-
-    setLoadingTips(true);
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/ai/allergy-tips`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          geminiApiKey: apiKey,
-          env: {
-            aqi: aqi ?? null,
-            tempMin: minT ?? null,
-            tempMax: maxT ?? null,
-          },
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success && Array.isArray(data.tips)) {
-        setAiTips(data.tips);
-      } else {
-        console.error("AI tips error:", data);
-      }
-    } catch (err) {
-      console.error("AI tips fetch failed:", err);
-    } finally {
-      setLoadingTips(false);
-    }
-  };
-
-  // ===== 呼叫後端 /api/ai/outfit，取得 Gemini 穿搭建議 =====
-  const loadAiOutfit = async (
-    minT: number | null,
-    maxT: number | null,
-    rain: number | null,
-    desc: string,
-    aqi: number | null
-  ) => {
-    const apiKey = localStorage.getItem("geminiApiKey");
-    if (!apiKey) {
-      console.warn("No Gemini API key found in localStorage (outfit)");
-      return;
-    }
-    if (!token) {
-      console.warn("No auth token, skip AI outfit");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/ai/outfit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          geminiApiKey: apiKey,
-          env: {
-            tempMin: minT,
-            tempMax: maxT,
-            rainPop: rain,
-            weatherDesc: desc,
-            aqi,
-          },
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setAiTop(data.top || "");
-        setAiOuter(data.outer || "");
-        setAiBottom(data.bottom || "");
-        setAiNote(data.note || "");
-      } else {
-        console.error("AI outfit error:", data);
-      }
-    } catch (err) {
-      console.error("AI outfit fetch failed:", err);
-    }
-  };
+  const [weatherData, setWeatherData] = useState<{temp: number; code: number; isDay: number} | null>(null);
 
   useEffect(() => {
-    if (!token) return;
-
-    const loadProfile = async () => {
+    const fetchWeather = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await fetch(
+          "https://api.open-meteo.com/v1/forecast?latitude=25.0330&longitude=121.5654&current=weather_code,temperature_2m,is_day&timezone=Asia%2FTaipei"
+        );
+        const data = await response.json();
+        setWeatherData({
+          temp: data.current.temperature_2m,
+          code: data.current.weather_code,
+          isDay: data.current.is_day
         });
-        if (!res.ok) return;
-        const data = await res.json();
-
-        // 優先用 username，沒有就用 email
-        setDisplayName(data.username || data.email || "");
-      } catch (err) {
-        console.error("loadProfile error:", err);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
       }
     };
-
-    loadProfile();
-  }, [token]);
-
-
-  useEffect(() => {
-    // 把原始 AQI records 轉成 StationRow[]
-    const mapToRows = (records: any[]): StationRow[] =>
-      (records ?? []).map((r: any) => ({
-        county: r.county || r.County || "",
-        site: r.sitename || r.SiteName || "",
-        aqi: r.aqi || r.AQI || "",
-        pm25: null,
-        pm10: null,
-        o3: null,
-        so2: null,
-        status: r.status ?? r.Status ?? "",
-        publishTime: r.publishtime || r.PublishTime || "",
-        lat:
-          r.latitude !== undefined && r.latitude !== null
-            ? Number(r.latitude)
-            : null,
-        lon:
-          r.longitude !== undefined && r.longitude !== null
-            ? Number(r.longitude)
-            : null,
-      }));
-
-    // 根據縣市名稱 fallback（台北 > 第一筆）
-    const pickFallbackStation = (rows: StationRow[]): StationRow | null =>
-      rows.find(
-        (r) =>
-          r.county.includes("北市") ||
-          r.county.includes("臺北") ||
-          r.county.includes("台北")
-      ) || rows[0] || null;
-
-    // 呼叫後端 F-C0032-001 包裝的今日高低溫 API
-    const loadTempByLocation = async (locationName: string) => {
-      try {
-        const res = await fetch(
-          `${WEATHER_TODAY_URL}?locationName=${encodeURIComponent(
-            locationName
-          )}`
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        if (data.success) {
-          setTempLocation(data.locationName || locationName);
-          setTempMin(data.minTemp ?? data.minT ?? null);
-          setTempMax(data.maxTemp ?? data.maxT ?? null);
-          setTempDiff(data.tempDiff ?? data.diff ?? null);
-
-          // 從後端抓 pop12h + weatherDesc
-          setRainPop(
-            typeof data.pop12h === "number"
-              ? data.pop12h
-              : data.pop ?? null
-          );
-          setWeatherDesc(data.weatherDesc || data.wx || "");
-        }
-      } catch (err) {
-        console.error("loadTempByLocation error:", err);
-      }
-    };
-
-    const loadEnv = async () => {
-      try {
-        const res = await fetch(AQI_API_URL, { credentials: "include" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        const records: any[] = data?.records ?? [];
-        const rows = mapToRows(records);
-        if (!rows.length) return;
-
-        // 沒 geolocation：直接 fallback
-        if (!navigator.geolocation) {
-          const fallback = pickFallbackStation(rows);
-          if (!fallback) return;
-
-          const info = getAqiInfo(fallback.aqi);
-          if (info) {
-            setAqiLabel(info.label);
-            setAqiLevelClass(mapAqiLabelToClass(info.label));
-          }
-
-          const numAqi = Number(fallback.aqi);
-          setAqiValue(Number.isFinite(numAqi) ? numAqi : null);
-
-          setTempLocation(`${fallback.county} ${fallback.site}`.trim());
-          await loadTempByLocation(fallback.county || "臺北市");
-          return;
-        }
-
-        // 有 geolocation：找最近測站
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            const nearest = findNearestStation(latitude, longitude, rows);
-            const target = nearest || pickFallbackStation(rows);
-            if (!target) return;
-
-            const info = getAqiInfo(target.aqi);
-            if (info) {
-              setAqiLabel(info.label);
-              setAqiLevelClass(mapAqiLabelToClass(info.label));
-            }
-            const numAqi = Number(target.aqi);
-            setAqiValue(Number.isFinite(numAqi) ? numAqi : null);
-
-            setTempLocation(`${target.county} ${target.site}`.trim());
-            await loadTempByLocation(target.county || "臺北市");
-          },
-          async (err) => {
-            console.error("geolocation error:", err);
-            const fallback = pickFallbackStation(rows);
-            if (!fallback) return;
-
-            const info = getAqiInfo(fallback.aqi);
-            if (info) {
-              setAqiLabel(info.label);
-              setAqiLevelClass(mapAqiLabelToClass(info.label));
-            }
-
-            const numAqi = Number(fallback.aqi);
-            setAqiValue(Number.isFinite(numAqi) ? numAqi : null);
-
-            setTempLocation(`${fallback.county} ${fallback.site}`.trim());
-            await loadTempByLocation(fallback.county || "臺北市");
-          }
-        );
-      } catch (err) {
-        console.error("loadEnv error:", err);
-      }
-    };
-
-    loadEnv();
+    fetchWeather();
   }, []);
 
-  // 當 AQI + 溫度都載好之後，再呼叫 Gemini 產生建議
-  useEffect(() => {
-    if (aqiValue === null || tempMin === null || tempMax === null) return;
-    loadAiAllergyTips(aqiValue, tempMin, tempMax);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aqiValue, tempMin, tempMax]);
-
-  // Outfit：當三個主要環境值載入後就呼叫
-  useEffect(() => {
-    if (
-      aqiValue === null ||
-      tempMin === null ||
-      tempMax === null
-    ) {
-      return;
-    }
-
-    loadAiOutfit(
-      tempMin,
-      tempMax,
-      rainPop,       // 可能是 null，沒關係
-      weatherDesc,   // 一開始是 ""，也沒關係
-      aqiValue
-    );
-  }, [aqiValue, tempMin, tempMax]);
+  const simulateGeminiResponse = () => {
+    setSuggestionText("It's a great day! Wear something comfortable.");
+  };
 
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-shell">
-        {/* Top bar */}
-        <header className="dashboard-header">
-          <div>
-            <div className="dashboard-title-row">
-              <span className="dashboard-title-text">
-                Hi, {displayName || "there"}, how's it going today?
-              </span>
-            </div>
-            <div className="dashboard-date">{today}</div>
-          </div>
+    <div className="dashboard-container">
+      {/* 歡迎區 */}
+      <div className="dashboard-header">
+        <h1 className="greeting">Hello, User!</h1>
+        <div className="user-profile-icon" onClick={toProfile}>
+          <span>U</span>
+        </div>
+      </div>
 
-        </header>
+      {/* 功能按鈕 */}
+      <div className="action-buttons">
+        <button onClick={toFeedback} className="action-btn primary">Share Feedback</button>
+        <button onClick={toProfile} className="action-btn secondary">Profile</button>
+      </div>
 
-        {/* Info cards row */}
-        <section className="info-cards">
-          {/* Air Quality 卡片 */}
-          <div
-            className="info-card clickable"
-            onClick={() => onNavigate("aqi")}
-          >
-            <div className="info-card-label">
-              <span className="info-card-icon">💨</span> Air Quality
-            </div>
-            <div className="info-card-main">
-              <span className={`badge ${aqiLevelClass}`}>
-                {aqiLabel ?? "Loading..."}
-              </span>
-            </div>
-          </div>
+      {/* 天氣卡片 */}
+      <div className="aqi-card">
+        <h3>Weather Status</h3>
+        <p>{loading ? "Loading..." : `${weatherData?.temp}°C`}</p>
+      </div>
 
-          {/* Allergy Risk */}
-          <div className="info-card">
-            <div className="info-card-label">
-              <span className="info-card-icon">⚠️</span> Allergy Risk
-            </div>
-            <div className="info-card-main">
-              {(() => {
-                const risk = getAllergyRiskFromAqiValue(aqiValue);
-                const text =
-                  risk === "loading"
-                    ? "Loading..."
-                    : risk === "unknown"
-                    ? "Unknown"
-                    : risk; // low / moderate / dangerous
-
-                return (
-                  <span className={`badge ${getAllergyRiskClass(risk)}`}>
-                    {text}
-                  </span>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Weather Phenomenon */}
-          <div
-            className="info-card"
-          >
-            <div className="info-card-label">
-              <span className="info-card-icon">🌤️</span> Weather Phenomenon
-            </div>
-            <div className="info-card-main">
-              {/* 天氣敘述小字放這裡（可選） */}
-              {weatherDesc && (
-                <span className="info-card-subtext">
-                  {weatherDesc}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Temperature 卡片：顯示今天高低溫簡略版 */}
-          <div
-            className="info-card"
-          >
-            <div className="info-card-label">
-              <span className="info-card-icon">🌡️</span> Temperature
-            </div>
-            <div className="info-card-main">
-              {tempMin !== null && tempMax !== null ? (
-                <span className="info-card-number">
-                  {tempMin}–{tempMax}°C{" "}
-                  {tempDiff !== null && ` (Δ ${tempDiff} °C)`}
-                </span>
-              ) : (
-                <span className="info-card-number">--°C</span>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Important notes */}
-        <section className="notes-card">
-          <div className="notes-header">
-            <span className="notes-icon">💡</span>
-            <span className="notes-title">
-              Allergy Advisory for Today
-            </span>
-          </div>
-
-          <ul className="notes-list">
-            {loadingTips && <li>Loading AI suggestions...</li>}
-
-            {!loadingTips && aiTips.length === 0 && (
-              <li>
-                No AI tips yet. Save your Gemini API key in Profile to enable
-                personalized allergy suggestions.
-              </li>
-            )}
-
-            {!loadingTips &&
-              aiTips.map((tip, idx) => <li key={idx}>{tip}</li>)}
-          </ul>
-        </section>
-
-        {/* Suggested outfit card */}
-        <section className="outfit-card">
-          <div className="outfit-header">
-            <div className="outfit-icon">👕</div>
-            <div>
-              <div className="outfit-title">Suggested Outfit</div>
-              <div className="outfit-subtitle">What to wear today</div>
-            </div>
-          </div>
-
-          <div className="outfit-body">
-            <div className="avatar-wrapper">
-              <div className="avatar-head" />
-              <div className="avatar-body" />
-              <div className="avatar-legs" />
-            </div>
-
-            <div className="outfit-tags">
-              {aiOuter || aiTop || aiBottom ? (
-                <>
-                  {aiOuter && <span className="tag-pill">{aiOuter}</span>}
-                  {aiTop && <span className="tag-pill">{aiTop}</span>}
-                  {aiBottom && <span className="tag-pill">{aiBottom}</span>}
-                </>
-              ) : (
-                <span className="tag-pill">
-                  {localStorage.getItem("geminiApiKey")
-                    ? "Loading outfit..."
-                    : "Add Gemini API key in Profile"}
-                </span>
-              )}
-
-
-              <div className="outfit-note">
-                <span className="sparkle">✨</span>{" "}
-                {aiNote || (localStorage.getItem("geminiApiKey") ? "Loading..." : "Add Gemini API key")}
-
-              </div>
-            </div>
-
-          </div>
-
-          <div className="outfit-footer">Outfit</div>
-        </section>
+      {/* AI 建議 */}
+      <div className="suggestion-card">
+        <h3>Outfit Suggestion</h3>
+        <p>{suggestionText}</p>
+        <button onClick={simulateGeminiResponse}>Refresh AI</button>
       </div>
     </div>
   );

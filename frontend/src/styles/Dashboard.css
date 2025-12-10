@@ -1,7 +1,7 @@
 /* 整個頁面背景（和 Landing 的藍色系一致） */
 .dashboard-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #c7d8f0, #b7d1eb);
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: flex-start;

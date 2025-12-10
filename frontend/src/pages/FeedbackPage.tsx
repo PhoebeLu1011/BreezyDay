@@ -1,606 +1,311 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
-import "../styles/Feedback.css";
-// 共用 AQI 工具 & 型別
-import { findNearestStation, getAqiInfo } from "../features/aqi/aqiUtils";
-import type { StationRow } from "../features/aqi/aqiTypes";
+// src/pages/FeedbackPage.tsx
+import { useState } from "react";
 
-type Props = {
+interface FeedbackPageProps {
   onBack: () => void;
-};
+}
 
-export default function FeedbackPage({ onBack }: Props) {
-  const { token } = useAuth();
+export default function FeedbackPage({ onBack }: FeedbackPageProps) {
+  // 模擬環境數據 (讓使用者參考)
+  const envData = {
+    aqi: 42,
+    temp: 20.5
+  };
 
-  const API_BASE =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-  
-    // 今天日期（前端顯示用）
-  const todayStr = new Date().toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  // 表單狀態
+  const [formData, setFormData] = useState({
+    top: "",
+    bottom: "",
+    accessory: "",
+    shoes: "",
+    feeling: "Just right",
+    adjustment: "Keep the same",
+    allergyStatus: "None",
+    symptoms: [] as string[],
+    medicine: "No",
+    impactScore: 0,
+    rating: 5
   });
-  // ===== Environment (AQI) =====
-  const [envAqi, setEnvAqi] = useState<number | null>(null);
-  const [envAqiSite, setEnvAqiSite] = useState<string>("");
 
-  // 今天高低溫（來自 F-C0032-001）
-  const [envMaxTemp, setEnvMaxTemp] = useState<number | null>(null);
-  const [envMinTemp, setEnvMinTemp] = useState<number | null>(null);
-  const [envTempDiff, setEnvTempDiff] = useState<number | null>(null);
-
-  // ===== Outfit (structured) =====
-  const [top, setTop] = useState("");
-  const [bottom, setBottom] = useState("");
-  const [accessories, setAccessories] = useState("");
-  const [shoes, setShoes] = useState("");
-
-  // ===== Temperature feel / outfit change =====
-  const [temperatureFeel, setTemperatureFeel] = useState(""); // very_cold / just_right / very_hot
-  const [changeOutfit, setChangeOutfit] = useState(""); // cooler / same / warmer
-
-  // ===== Allergy-related =====
-  const [allergyFeel, setAllergyFeel] = useState(""); // severe / normal / none
-  const [allergyImpact, setAllergyImpact] = useState(0); // 0–10 overall impact
-  const [allergySymptoms, setAllergySymptoms] = useState<string[]>([]); // multi-label
-  const [allergyMed, setAllergyMed] = useState(""); // none / otc / prescribed
-
-  // ===== Overall rating for model =====
-  const [recommendationRating, setRecommendationRating] = useState(5); // 0–10
-
-  const [status, setStatus] = useState<"" | "saving" | "ok" | "error">("");
-
-  // prettier buttons (we’ll style .btn-choice in CSS)
-  function choiceBtn(base: string, active: boolean) {
-    return `btn btn-choice ${base} ${active ? "active" : ""}`;
-  }
-
-  function toggleSymptom(symptom: string) {
-    setAllergySymptoms((prev) =>
-      prev.includes(symptom)
-        ? prev.filter((s) => s !== symptom)
-        : [...prev, symptom]
-    );
-  }
-
-  function symptomBtnClass(active: boolean) {
-    return `symptom-toggle ${active ? "selected" : ""}`;
-  }
-
-  // ============================
-  // 取得 AQI（最近測站）
-  // ============================
-  useEffect(() => {
-    async function loadEnv() {
-      try {
-        // 1️ 打自己的後端拿 AQI
-        const res = await fetch(`${API_BASE}/api/aqi`);
-        const raw = await res.json();
-
-        // 這裡沿用 AQIPage 的 mapping：data.records 是一個 array
-        const rows: StationRow[] = (raw?.records ?? []).map((r: any) => ({
-          county: r.county || "",
-          site: r.sitename || r.SiteName || "",
-          aqi: r.aqi || "",
-          pm25: null,
-          pm10: null,
-          o3: null,
-          so2: null,
-          status: r.status ?? r.Status ?? "",
-          publishTime: r.publishtime || r.PublishTime || "",
-          lat:
-            r.latitude !== undefined && r.latitude !== null
-              ? Number(r.latitude)
-              : null,
-          lon:
-            r.longitude !== undefined && r.longitude !== null
-              ? Number(r.longitude)
-              : null,
-        }));
-
-        // 2️ 用瀏覽器定位 + findNearestStation 找最近測站
-        if (!navigator.geolocation) {
-          // 沒有定位權限就 fallback：拿第一筆
-          if (rows.length > 0) {
-            const first = rows[0];
-            const nAqi = Number(first.aqi);
-            setEnvAqi(Number.isFinite(nAqi) ? nAqi : null);
-            setEnvAqiSite(`${first.county} ${first.site}`.trim());
-          }
-          return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            const nearest = findNearestStation(latitude, longitude, rows);
-
-            if (nearest) {
-              const nAqi = Number(nearest.aqi);
-              setEnvAqi(Number.isFinite(nAqi) ? nAqi : null);
-              setEnvAqiSite(`${nearest.county} ${nearest.site}`.trim());
-            }
-          },
-          (err) => {
-            console.error("Geolocation error", err);
-            // 拒絕定位時 fallback：第一個測站
-            if (rows.length > 0) {
-              const first = rows[0];
-              const nAqi = Number(first.aqi);
-              setEnvAqi(Number.isFinite(nAqi) ? nAqi : null);
-              setEnvAqiSite(`${first.county} ${first.site}`.trim());
-            }
-          }
-        );
-      } catch (err) {
-        console.error("Failed to load environment info", err);
-      }
-    }
-
-    loadEnv();
-  }, [API_BASE]);
-
-  // ============================
-  // 用 AQI 的縣市去抓今天高低溫（F-C0032-001）
-  // ============================
-  useEffect(() => {
-    if (!envAqiSite) return;
-
-    // envAqiSite 目前像是「臺北市 古亭」，取第一段當縣市
-    const county = envAqiSite.split(" ")[0] || envAqiSite;
-
-    async function loadTodayRange() {
-      try {
-        const resp = await fetch(
-          `${API_BASE}/api/weather/today-range?locationName=${encodeURIComponent(
-            county
-          )}`
-        );
-        const json = await resp.json();
-
-        if (json.success) {
-          setEnvMaxTemp(
-            typeof json.maxTemp === "number" ? json.maxTemp : null
-          );
-          setEnvMinTemp(
-            typeof json.minTemp === "number" ? json.minTemp : null
-          );
-          setEnvTempDiff(
-            typeof json.tempDiff === "number" ? json.tempDiff : null
-          );
-        }
-      } catch (e) {
-        console.error("Failed to load today temp range", e);
-      }
-    }
-
-    loadTodayRange();
-  }, [API_BASE, envAqiSite]);
-
-  // ============================
-  // Submit
-  // ============================
-  async function submitForm() {
-    try {
-      setStatus("saving");
-
-      const body = {
-        outfitTop: top,
-        outfitBottom: bottom,
-        outfitAccessories: accessories,
-        outfitShoes: shoes,
-        temperatureFeel,
-        changeOutfit,
-        allergyFeel,
-        allergyImpact,
-        allergySymptoms,
-        allergyMed,
-        recommendationRating,
-        // 寫回後端 envAqi / envAqiSite（對應 app.py 的欄位）
-        envAqi,
-        envAqiSite,
-        feedbackDate: todayStr,
-        envMaxTemp,
-        envMinTemp,
-        envTempDiff,
+  // 處理多選症狀
+  const toggleSymptom = (sym: string) => {
+    setFormData(prev => {
+      const exists = prev.symptoms.includes(sym);
+      return {
+        ...prev,
+        symptoms: exists 
+          ? prev.symptoms.filter(s => s !== sym)
+          : [...prev.symptoms, sym]
       };
+    });
+  };
 
-      const resp = await fetch(`${API_BASE}/api/feedback`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!resp.ok) throw new Error("Request failed");
-
-      await resp.json();
-      setStatus("ok");
-    } catch (err) {
-      console.error(err);
-      setStatus("error");
-    }
-  }
-
-  const aqiInfo = envAqi !== null ? getAqiInfo(envAqi) : null;
+  const handleSubmit = () => {
+    alert("Feedback Submitted! Thank you.");
+    onBack();
+  };
 
   return (
-    <div className="feedback-container">
-      {/* Top bar */}
-      <div className="top-bar mb-3">
-        <button onClick={onBack} className="back-btn">
+    <div className="container mt-4 mb-5" style={{ maxWidth: "800px" }}>
+      
+      {/* 🌟 內嵌 CSS：定義表單專屬的美化樣式 */}
+      <style>{`
+        /* 毛玻璃大容器 */
+        .glass-form-panel {
+          background: rgba(255, 255, 255, 0.75);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+          padding: 2.5rem;
+        }
+
+        /* 標題字體 */
+        .title-serif {
+          font-family: 'Playfair Display', serif;
+          color: #2c3e50;
+        }
+
+        /* 互動式選項按鈕 (取代傳統 Radio) */
+        .choice-btn {
+          background: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 12px;
+          padding: 10px 16px;
+          font-size: 0.9rem;
+          font-family: 'Poppins', sans-serif;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+          color: #555;
+          flex: 1; /* 讓按鈕平均分配寬度 */
+        }
+        .choice-btn:hover {
+          background: #fff;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        /* 被選中的狀態 */
+        .choice-btn.active {
+          background: #2c3e50;
+          color: white;
+          border-color: #2c3e50;
+          box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
+        }
+
+        /* 下拉選單美化 */
+        .glass-select {
+          background: rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 12px;
+          padding: 10px 15px;
+          width: 100%;
+          font-family: 'Poppins', sans-serif;
+          color: #333;
+          outline: none;
+        }
+        .glass-select:focus {
+          background: #fff;
+          border-color: #2c3e50;
+        }
+
+        /* 滑桿美化 (Range Slider) */
+        input[type=range] {
+          -webkit-appearance: none;
+          width: 100%;
+          background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+          width: 100%;
+          height: 8px;
+          background: rgba(0,0,0,0.1);
+          border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          height: 24px;
+          width: 24px;
+          border-radius: 50%;
+          background: #2c3e50;
+          margin-top: -8px; /* 修正對齊 */
+          cursor: pointer;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+          border: 2px solid #fff;
+        }
+
+        /* 主要按鈕 */
+        .btn-submit {
+          background: #2c3e50;
+          color: white;
+          border: none;
+          border-radius: 50px;
+          padding: 12px 40px;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          transition: all 0.3s;
+        }
+        .btn-submit:hover {
+          background: #1a252f;
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+        }
+      `}</style>
+
+      {/* 頂部導航列 (Back) */}
+      <div className="d-flex align-items-center mb-4">
+        <button 
+          onClick={onBack} 
+          className="btn btn-link text-decoration-none text-secondary d-flex align-items-center p-0 me-3"
+          style={{ fontFamily: 'Poppins, sans-serif' }}
+        >
           ← Back
         </button>
-        <h2 className="mb-0">Share Your Feedback</h2>
+        <h2 className="m-0 fw-bold title-serif">Share Your Feedback</h2>
       </div>
 
-      <div className="card shadow-sm border-0">
-        <div className="card-body">
-
-          {/* 🌫 AQI 卡片 */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">🌫 Current Air Quality (AQI)</label>
-
-            {envAqi !== null ? (
-              <div className="p-3 border rounded bg-light">
-                <div className="d-flex justify-content-between">
-                  <span className="fw-bold">
-                    {envAqiSite || "Unknown location"}
-                  </span>
-                  <span>{aqiInfo ? aqiInfo.label : "--"}</span>
-                </div>
-
-                <div className="text-muted small mt-1">Today • {todayStr}</div>
-
-                <div className="fs-4 mt-2">{envAqi}</div>
-              </div>
-            ) : (
-              <div className="text-muted">Loading AQI...</div>
-            )}
-          </div>
-
-
-          {/* 🌡 今日溫度卡片 */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">🌡 Today’s Temperature</label>
-
-            {envMaxTemp !== null && envMinTemp !== null ? (
-              <div className="p-3 border rounded bg-light">
-                <div className="d-flex justify-content-between">
-                  <span className="fw-bold">
-                    High / Low
-                  </span>
-                  <span className="text-muted small">{todayStr}</span>
-                </div>
-
-                <div className="mt-2">
-                  <div>🔺 Max: <strong>{envMaxTemp}°C</strong></div>
-                  <div>🔻 Min: <strong>{envMinTemp}°C</strong></div>
-                  {envTempDiff !== null && (
-                    <div>Δ Temp: <strong>{envTempDiff}°C</strong></div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-muted">Loading temperature...</div>
-            )}
-          </div>
-
-          {/* 1. Outfit: 4 dropdowns */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              1. What are you wearing today?
-            </label>
-            <div className="row g-2">
-              <div className="col-md-6">
-                <label className="form-label small mb-1">Top</label>
-                <select
-                  className="form-select"
-                  value={top}
-                  onChange={(e) => setTop(e.target.value)}
-                >
-                  <option value="">Select top...</option>
-                  <option value="tshirt_short">Short-sleeve T-shirt</option>
-                  <option value="tshirt_long">Long-sleeve T-shirt</option>
-                  <option value="shirt">Shirt / blouse</option>
-                  <option value="sweater">Sweater</option>
-                  <option value="hoodie">Hoodie</option>
-                  <option value="jacket_light">Light jacket</option>
-                  <option value="coat_thick">Coat / thick outerwear</option>
-                  <option value="raincoat">Raincoat</option>
-                </select>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label small mb-1">Bottom</label>
-                <select
-                  className="form-select"
-                  value={bottom}
-                  onChange={(e) => setBottom(e.target.value)}
-                >
-                  <option value="">Select bottom...</option>
-                  <option value="shorts">Shorts</option>
-                  <option value="skirt">Skirt</option>
-                  <option value="jeans">Jeans</option>
-                  <option value="long_pants">Long pants</option>
-                  <option value="leggings">Leggings / tights</option>
-                </select>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label small mb-1">Accessories</label>
-                <select
-                  className="form-select"
-                  value={accessories}
-                  onChange={(e) => setAccessories(e.target.value)}
-                >
-                  <option value="">Select accessories...</option>
-                  <option value="none">None</option>
-                  <option value="mask">Mask</option>
-                  <option value="scarf">Scarf</option>
-                  <option value="hat">Hat / cap</option>
-                  <option value="glasses">Glasses</option>
-                  <option value="sunglasses">Sunglasses</option>
-                </select>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label small mb-1">Shoes</label>
-                <select
-                  className="form-select"
-                  value={shoes}
-                  onChange={(e) => setShoes(e.target.value)}
-                >
-                  <option value="">Select shoes...</option>
-                  <option value="sneakers">Sneakers</option>
-                  <option value="sandals">Sandals</option>
-                  <option value="boots">Boots</option>
-                  <option value="leather_shoes">Leather shoes</option>
-                  <option value="slippers">Slippers</option>
-                </select>
-              </div>
+      <div className="glass-form-panel">
+        
+        {/* 環境數據提示 */}
+        <div className="text-center mb-5 pb-4 border-bottom border-light">
+          <p className="text-muted small mb-3 text-uppercase" style={{ letterSpacing: '1px' }}>Current Conditions</p>
+          <div className="d-flex justify-content-center gap-5">
+            <div>
+              <div className="small text-secondary fw-bold">Air Quality</div>
+              <div className="fs-4 fw-bold text-success">{envData.aqi} <span className="fs-6 text-muted fw-normal">(Good)</span></div>
             </div>
-          </div>
-
-
-          {/* 2. Temperature feel */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              2. How do you feel (temperature)?
-            </label>
-            <div className="btn-group w-100" role="group">
-              <button
-                type="button"
-                className={choiceBtn(
-                  "flex-fill",
-                  temperatureFeel === "very_cold"
-                )}
-                onClick={() => setTemperatureFeel("very_cold")}
-              >
-                🧊 Very cold
-              </button>
-              <button
-                type="button"
-                className={choiceBtn(
-                  "flex-fill",
-                  temperatureFeel === "just_right"
-                )}
-                onClick={() => setTemperatureFeel("just_right")}
-              >
-                😊 Just right
-              </button>
-              <button
-                type="button"
-                className={choiceBtn(
-                  "flex-fill",
-                  temperatureFeel === "very_hot"
-                )}
-                onClick={() => setTemperatureFeel("very_hot")}
-              >
-                🔥 Very hot
-              </button>
+            <div>
+              <div className="small text-secondary fw-bold">Temperature</div>
+              <div className="fs-4 fw-bold text-dark">{envData.temp}°C</div>
             </div>
-          </div>
-
-          {/* 3. Outfit change intention */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              3. If you could adjust your outfit, what would you do?
-            </label>
-            <div className="btn-group w-100" role="group">
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", changeOutfit === "cooler")}
-                onClick={() => setChangeOutfit("cooler")}
-              >
-                👕 Wear less / cooler
-              </button>
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", changeOutfit === "same")}
-                onClick={() => setChangeOutfit("same")}
-              >
-                😌 Keep the same
-              </button>
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", changeOutfit === "warmer")}
-                onClick={() => setChangeOutfit("warmer")}
-              >
-                🧥 Wear more / warmer
-              </button>
-            </div>
-          </div>
-
-          {/* 4. Overall allergy feeling */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              4. Overall, how are your allergies today?
-            </label>
-            <div className="btn-group w-100" role="group">
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", allergyFeel === "none")}
-                onClick={() => setAllergyFeel("none")}
-              >
-                😊 None
-              </button>
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", allergyFeel === "normal")}
-                onClick={() => setAllergyFeel("normal")}
-              >
-                😐 Mild / normal
-              </button>
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", allergyFeel === "severe")}
-                onClick={() => setAllergyFeel("severe")}
-              >
-                🤧 Severe
-              </button>
-            </div>
-          </div>
-
-          {/* 5. Allergy symptoms */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              5. Which allergy symptoms do you have today? (you can choose
-              multiple)
-            </label>
-
-            <div className="symptom-toggle-group">
-              {[
-                { key: "sneezing", label: "Sneezing" },
-                { key: "runny_nose", label: "Runny nose" },
-                { key: "stuffy_nose", label: "Stuffy nose" },
-                { key: "itchy_eyes", label: "Itchy / watery eyes" },
-                { key: "cough", label: "Cough" },
-                { key: "skin_rash", label: "Skin rash / itch" },
-                { key: "wheezing", label: "Wheezing / shortness of breath" },
-                { key: "fatigue", label: "Tired / fatigue" },
-              ].map((sym) => {
-                const active = allergySymptoms.includes(sym.key);
-                return (
-                  <button
-                    key={sym.key}
-                    type="button"
-                    className={symptomBtnClass(active)}
-                    onClick={() => toggleSymptom(sym.key)}
-                    aria-pressed={active}
-                  >
-                    {sym.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 6. Allergy medicine usage */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              6. Did you take any allergy medicine today?
-            </label>
-            <div className="btn-group w-100" role="group">
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", allergyMed === "none")}
-                onClick={() => setAllergyMed("none")}
-              >
-                🚫 No
-              </button>
-              <button
-                type="button"
-                className={choiceBtn("flex-fill", allergyMed === "otc")}
-                onClick={() => setAllergyMed("otc")}
-              >
-                💊 OTC medicine
-              </button>
-              <button
-                type="button"
-                className={choiceBtn(
-                  "flex-fill",
-                  allergyMed === "prescribed"
-                )}
-                onClick={() => setAllergyMed("prescribed")}
-              >
-                🩺 Prescribed medicine
-              </button>
-            </div>
-          </div>
-
-          {/* 7. Allergy impact slider 0–10 */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              7. How much do allergies affect your day today? (0–10)
-            </label>
-            <div className="d-flex align-items-center gap-3">
-              <input
-                type="range"
-                className="form-range"
-                min={0}
-                max={10}
-                value={allergyImpact}
-                onChange={(e) => setAllergyImpact(Number(e.target.value))}
-              />
-              <div
-                className="fw-bold"
-                style={{ width: 40, textAlign: "right" }}
-              >
-                {allergyImpact}
-              </div>
-            </div>
-          </div>
-
-          {/* 8. Recommendation rating slider 0–10 */}
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              8. Rate our outfit & allergy recommendations (0–10)
-            </label>
-            <div className="d-flex align-items-center gap-3">
-              <input
-                type="range"
-                className="form-range"
-                min={0}
-                max={10}
-                value={recommendationRating}
-                onChange={(e) =>
-                  setRecommendationRating(Number(e.target.value))
-                }
-              />
-              <div
-                className="fw-bold"
-                style={{ width: 40, textAlign: "right" }}
-              >
-                {recommendationRating}
-              </div>
-            </div>
-          </div>
-
-          {/* Submit + status */}
-          <div className="d-flex flex-column flex-sm-row align-items-sm-center gap-3 mt-3">
-            <button
-              className="btn btn-primary px-4 submit-btn"
-              type="button"
-              onClick={submitForm}
-              disabled={status === "saving"}
-            >
-              {status === "saving" ? "Saving..." : "Submit Feedback"}
-            </button>
-
-            {status === "ok" && (
-              <div className="alert alert-success py-1 px-2 mb-0">Saved!</div>
-            )}
-            {status === "error" && (
-              <div className="alert alert-danger py-1 px-2 mb-0">
-                Failed to save. Please try again.
-              </div>
-            )}
           </div>
         </div>
+
+        {/* 1. 穿著調查 */}
+        <div className="mb-5">
+          <h5 className="fw-bold mb-3 title-serif">1. What are you wearing today?</h5>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="small text-muted mb-1">Top</label>
+              <select className="glass-select" value={formData.top} onChange={e => setFormData({...formData, top: e.target.value})}>
+                <option value="">Select top...</option>
+                <option value="t-shirt">T-shirt</option>
+                <option value="shirt">Shirt</option>
+                <option value="hoodie">Hoodie</option>
+                <option value="coat">Coat</option>
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="small text-muted mb-1">Bottom</label>
+              <select className="glass-select" value={formData.bottom} onChange={e => setFormData({...formData, bottom: e.target.value})}>
+                <option value="">Select bottom...</option>
+                <option value="jeans">Jeans</option>
+                <option value="shorts">Shorts</option>
+                <option value="skirt">Skirt</option>
+                <option value="trousers">Trousers</option>
+              </select>
+            </div>
+            {/* 可以視需要加入 Accessories / Shoes */}
+          </div>
+        </div>
+
+        {/* 2. 體感溫度 */}
+        <div className="mb-5">
+          <h5 className="fw-bold mb-3 title-serif">2. How do you feel?</h5>
+          <div className="d-flex gap-2">
+            {["Very cold", "Chilly", "Just right", "Warm", "Very hot"].map(opt => (
+              <div 
+                key={opt}
+                className={`choice-btn ${formData.feeling === opt ? 'active' : ''}`}
+                onClick={() => setFormData({...formData, feeling: opt})}
+              >
+                {opt}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. 穿著調整建議 */}
+        <div className="mb-5">
+          <h5 className="fw-bold mb-3 title-serif">3. Adjust outfit?</h5>
+          <div className="d-flex gap-2">
+            {[
+              { label: "Wear Less", val: "Wear less" },
+              { label: "Keep Same", val: "Keep the same" },
+              { label: "Wear More", val: "Wear more" }
+            ].map(item => (
+              <div 
+                key={item.val}
+                className={`choice-btn ${formData.adjustment === item.val ? 'active' : ''}`}
+                onClick={() => setFormData({...formData, adjustment: item.val})}
+              >
+                {item.label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 4. 過敏狀況 */}
+        <div className="mb-5">
+          <h5 className="fw-bold mb-3 title-serif">4. Allergy Status</h5>
+          <div className="d-flex gap-2">
+             {["None", "Mild", "Severe"].map(opt => (
+              <div 
+                key={opt}
+                className={`choice-btn ${formData.allergyStatus === opt ? 'active' : ''}`}
+                onClick={() => setFormData({...formData, allergyStatus: opt})}
+              >
+                {opt === "None" ? "😊 None" : opt === "Mild" ? "🤧 Mild" : "😷 Severe"}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. 症狀 (多選) */}
+        {formData.allergyStatus !== "None" && (
+          <div className="mb-5 animate__animated animate__fadeIn">
+            <h5 className="fw-bold mb-3 title-serif">5. Symptoms (Multi-select)</h5>
+            <div className="d-flex flex-wrap gap-2">
+              {["Sneezing", "Runny nose", "Itchy eyes", "Cough", "Skin rash", "Fatigue"].map(sym => (
+                <div 
+                  key={sym}
+                  className={`choice-btn ${formData.symptoms.includes(sym) ? 'active' : ''}`}
+                  style={{ flex: 'none' }} // 不要強制撐開，保持 Pill 形狀
+                  onClick={() => toggleSymptom(sym)}
+                >
+                  {sym}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 6. 滿意度評分 Slider */}
+        <div className="mb-5">
+          <div className="d-flex justify-content-between align-items-end mb-2">
+             <h5 className="fw-bold mb-0 title-serif">6. Rate our recommendations</h5>
+             <span className="fs-4 fw-bold text-dark">{formData.rating} <span className="fs-6 text-muted">/ 10</span></span>
+          </div>
+          <input 
+            type="range" 
+            min="0" max="10" 
+            value={formData.rating} 
+            onChange={e => setFormData({...formData, rating: Number(e.target.value)})} 
+          />
+          <div className="d-flex justify-content-between mt-1 small text-muted">
+            <span>Poor</span>
+            <span>Excellent</span>
+          </div>
+        </div>
+
+        {/* 提交按鈕 */}
+        <div className="text-center">
+          <button className="btn-submit w-100" onClick={handleSubmit}>
+            Submit Feedback
+          </button>
+        </div>
+
       </div>
     </div>
   );

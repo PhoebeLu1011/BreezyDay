@@ -1,68 +1,123 @@
+/* src/index.css */
+
+/* 引入字體 */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@400;500;600&display=swap');
+
+/* ... 您原本的其他 CSS 保持在下面 ... */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --bg-color: transparent;
+  /* 🌟 改成更透一點的白，讓背景雲霧透出來 */
+  --card-bg: rgba(255, 255, 255, 0.65); 
+  --text-main: #2c3e50; /* 深藍灰，比純黑柔和 */
+  --text-sub: #555555;
+  --accent-alert: #FF6B6B; /* 柔和紅 */
+  --accent-safe: #4ECDC4; /* 柔和綠 */
+  
+  /* 🌟 關鍵設定：圓角半徑 */
+  --radius-lg: 24px; /* 卡片的大圓角 */
+  --radius-sm: 12px; /* 按鈕的小圓角 */
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* 全局重置 */
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* 🌟 卡片風格大改造：圓角 + 毛玻璃 + 柔和陰影 */
+.card {
+  background-color: rgba(255, 255, 255, 0.65) !important; /* 半透明白 */
+  backdrop-filter: blur(16px) !important;               /* 模糊背景 */
+  border-radius: 24px !important;                       /* 🌟 24px 大圓角 */
+  border: 1px solid rgba(255, 255, 255, 0.4) !important; /* 淡淡白框 */
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;  /* 柔和陰影 */
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* 滑鼠移上去稍微浮起 */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* 🌟 按鈕也要變圓 */
+button, .btn {
+  border-radius: var(--radius-sm) !important;
+  border: none !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-weight: 600;
+  padding: 10px 20px;
+  transition: all 0.2s;
+}
+
+/* 🌟 字體設定 */
+.temp-large, .data-value, .aqi-level, h1, h2, h3, h6 {
+  font-family: 'Inter', sans-serif !important; /* 改回圓潤字體，看起來比較親切 */
+  font-weight: 700 !important;
+  color: #2c3e50;
+}
+
+/* --- 新增的設定開始 --- */
+
+/* 專門將 Hello User 和日期改為襯線體 */
+.dashboard-greeting {
+  /* 使用常見的襯線字體組合，並加上 !important 來強制覆蓋原有設定 */
+  font-family: Georgia, "Times New Roman", Times, serif !important;
+  
+  /* 如果您覺得字體太粗，可以把下面這行註解拿掉來調整粗細 */
+  /* font-weight: normal !important; */
+}
+
+/* --- 新增的設定結束 --- */
+
+/* 讓特大溫度數字還是保留一點數據感，但不要太硬 */
+.temp-large {
+  font-family: 'JetBrains Mono', monospace !important;
+  letter-spacing: -0.04em;
+}
+
+/* 修正 Bootstrap 的干擾 */
+.rounded-0 {
+  border-radius: var(--radius-lg) !important; /* 強制覆蓋 Bootstrap 的直角設定 */
+}
+@media (min-width: 768px) { /* 只在平板和桌機上生效 */
+  .span-2 {
+    grid-column: span 2;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+}
+
+/* 🌟 新增：小人圖片的樣式 */
+.avatar-wrapper {
+  width: 120px; /* 變大一點 */
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.5); /* 背後加一個淡淡的光暈 */
+  border-radius: 50%; /* 圓形背景 */
+  margin-right: 2rem;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1); /* 柔和的浮起陰影 */
+  transition: all 0.3s ease;
+}
+
+/* 🌟 新的：小人圖片本體 */
+.outfit-avatar-img {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.05));
+}
+
+/* 滑鼠移過去的互動效果 */
+.card:hover .avatar-wrapper {
+  transform: scale(1.05) rotate(-3deg); /* 稍微放大並歪頭 */
+  box-shadow: 0 12px 20px rgba(0,0,0,0.15);
 }

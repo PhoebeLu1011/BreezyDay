@@ -1,0 +1,120 @@
+/* src/styles/LandingPage.css */
+
+.landing-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f7fa 0%, #e8f5e9 100%);
+  font-family: 'Inter', sans-serif;
+}
+
+.landing-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.landing-header {
+  margin-bottom: 2rem;
+}
+
+.landing-logo-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.landing-title {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 0;
+  font-weight: 700;
+}
+
+.landing-subtitle {
+  color: #7f8c8d;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.landing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.input-wrapper {
+  text-align: left;
+}
+
+.input-wrapper label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #95a5a6;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.5px;
+}
+
+.landing-input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  box-sizing: border-box; /* 重要：防止 padding 撐開寬度 */
+}
+
+.landing-input:focus {
+  outline: none;
+  border-color: #27ae60;
+}
+
+.landing-btn {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 0.5rem;
+}
+
+.landing-btn:hover {
+  background-color: #219150;
+}
+
+.landing-footer {
+  margin-top: 1.5rem;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 1rem;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #27ae60;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.toggle-btn:hover {
+  color: #219150;
+}

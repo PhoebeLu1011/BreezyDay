@@ -1,216 +1,127 @@
-/* ================================
-   整體外框
-================================ */
+/* src/styles/FeedbackHistory.css */
 
-.feedback-history-container {
-  min-height: calc(100vh - 70px);
-  padding: 32px 16px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: radial-gradient(
-    circle at top left,
-    #e5f3ff 0,
-    #f1f7f4 35%,
-    #e6f5ff 70%,
-    #dde9ea 100%
-  );
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #1f2933;
+/* 引入 Inter 字體 (確保每一頁都有這風格) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+.history-page-wrapper {
+  padding: 2rem;
+  min-height: 100vh;
+  /* 淺色漸層背景，跟主視覺比較搭 */
+  background: transparent; 
+  font-family: 'Inter', sans-serif; /* 統一字體 */
 }
 
-/* ================================
-   Top Bar
-================================ */
-
-.history-topbar {
-  width: 100%;
-  max-width: 1120px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+.history-container {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-.history-topbar h2 {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #16364d;
+/* --- 標題區域 --- */
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(0,0,0,0.03); /* 淡淡的分隔線 */
 }
 
 .back-btn {
-  border: none;
-  background: transparent;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  color: #40687e;
+  background: white;
+  border: 1px solid #e0e0e0;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #555;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
 }
 
 .back-btn:hover {
-  background: rgba(64, 104, 126, 0.08);
-  transform: translateX(-1px);
-}
-
-/* ================================
-   Summary Cards
-================================ */
-
-.summary-row {
-  width: 100%;
-  max-width: 1120px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.summary-card {
-  flex: 1 1 240px;
-  background: #ffffffd9;
-  border-radius: 18px;
-  padding: 18px 20px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-}
-
-.summary-title {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #6b7b8c;
-  margin-bottom: 6px;
-}
-
-.summary-value {
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: #172b4d;
-}
-
-/* ================================
-   History List Wrapper
-================================ */
-
-.history-list {
-  width: 100%;
-  max-width: 1120px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 22px;
-  padding: 20px 22px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-  min-height: 260px;
-}
-
-.empty-msg {
-  height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8a9aa8;
-  font-size: 0.95rem;
-}
-
-/* ================================
-   Horizontal Scroll Section
-================================ */
-
-.history-scroller {
-  overflow-x: auto;
-  padding-bottom: 6px;
-}
-
-/* ================================
-   Header Row
-================================ */
-
-.history-header-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 1300px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(148, 180, 214, 0.45);
-}
-
-.history-header-cell {
-  min-width: 130px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #6b7b8c;
-}
-
-/* ================================
-   Data Rows (整條藍色橫條)
-================================ */
-
-/* 每一列：整條藍色卡片 */
-.history-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  min-width: 1300px;
-
-  margin-top: 14px;
-  padding: 16px 18px;
-
-  border-radius: 18px;
-  background: #f5f9ff;
-  border: 1px solid rgba(148, 180, 214, 0.45);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
-
-  transition: background 0.15s ease, box-shadow 0.2s ease,
-    transform 0.1s ease;
-}
-
-.history-row:hover {
-  background: #eef6ff;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
+  background: #f8f9fa;
   transform: translateY(-1px);
+  color: #2c3e50;
 }
 
-/* 每一欄寬度設定 */
-.history-cell {
-  min-width: 130px;
-  max-width: 200px;
-  font-size: 0.85rem;
-  color: #243b53;
+.page-title {
+  font-size: 2rem; /* 統一標題大小 */
+  font-weight: 800; /* 加粗讓它更有份量 */
+  color: #2c3e50; /* BreezyDay 的深藍色 */
+  margin: 0;
+  letter-spacing: -0.5px;
 }
 
-.history-cell-date {
-  min-width: 150px;
+/* --- 數據卡片區域 --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  text-align: center;
+  border: 1px solid rgba(0,0,0,0.02);
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #20374c;
+  color: #7f8c8d; /* 淺灰色標籤 */
+  margin-bottom: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-/* 兩行顯示用 */
-.cell-main {
-  font-weight: 600;
-  margin-bottom: 2px;
-  color: #20374c;
+.stat-value {
+  font-size: 2.5rem; /* 數字大一點 */
+  font-weight: 700;
+  color: #27ae60; /* BreezyDay 的標誌性綠色 */
+  margin: 0;
+  line-height: 1.2;
 }
 
-.cell-sub {
-  font-size: 0.78rem;
-  color: #8090a0;
+/* --- 列表內容區域 --- */
+.history-content {
+  background: white;
+  min-height: 300px;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* ================================
-   RWD
-================================ */
+.loading-state, .empty-state {
+  text-align: center;
+  color: #95a5a6;
+  font-size: 1.1rem;
+}
 
-@media (max-width: 768px) {
-  .history-header-row {
-    min-width: 900px;
-  }
+/* 載入動畫 */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #27ae60;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.5rem auto;
+}
 
-  .history-row {
-    min-width: 900px;
-    padding: 12px 14px;
-  }
-
-  .history-header-cell,
-  .history-cell {
-    min-width: 110px;
-  }
+@keyframes spin { 
+  0% { transform: rotate(0deg); } 
+  100% { transform: rotate(360deg); } 
 }
