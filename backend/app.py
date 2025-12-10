@@ -15,15 +15,23 @@ import math
 from datetime import timedelta, datetime, timezone
 from ai_gemini import build_allergy_prompt, call_gemini, build_outfit_prompt
 from requests.exceptions import HTTPError
+# ... import 區域 ...
 load_dotenv()
+
+# 👇 加上這兩行測試
+uri = os.getenv("MONGO_URI")
+print(f"目前讀取的連線字串: {uri}") 
+# 👆 啟動時請看終端機印出什麼，確認：
+# 1. 有沒有讀到東西？(如果是 None 代表 .env 檔名或位置錯了)
+# 2. 帳號密碼區段是不是你預期的？
+
+app = Flask(__name__)
+# ...
+
 
 app = Flask(__name__)
 # CORS 設定
-CORS(
-    app,
-    resources={r"/api/*": {"origins": "http://localhost:5173"}},
-    supports_credentials=True,
-)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # ===== JWT 設定 =====
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev_secret")
