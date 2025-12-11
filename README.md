@@ -67,7 +67,7 @@ Fully automated data retrieval from CWA Weather API and MOENV AQI API.
 
 ### Database
 - MongoDB Atlas (NoSQL)
-- Collections: `users`, `feedback`
+- Collections: `users`, `feedback`, `ai_suggestions`
 
 ### Infrastructure
 - Environment variables via `.env`
