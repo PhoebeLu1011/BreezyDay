@@ -256,7 +256,7 @@ BREEZYDAY/
 │   ├── .venv/                  # Python 虛擬環境
 │   ├── .env                    # Flask backend 環境變數
 │   ├── app.py                  # Flask 主入口
-│   └── ...（還沒 預留用)
+│   └── ai_gemini.py
 │
 ├── frontend/
 │   ├── node_modules/
@@ -267,8 +267,7 @@ BREEZYDAY/
 │   │   ├── context/
 │   │   │   └── AuthContext.tsx # JWT 登入狀態管理
 │   │   │
-│   │   ├── features/           # 各功能模組化
-│   │   │   ├── allergy/        # （預留功能，尚未實作）
+│   │   ├── features/         
 │   │   │   └── aqi/            # AQI 模組
 │   │   │       ├── aqi.css
 │   │   │       ├── AQIDashboard.tsx
@@ -295,7 +294,6 @@ BREEZYDAY/
 │   │   │
 │   │   ├── App.css
 │   │   ├── App.tsx             # React 主組件
-│   │   ├── index.css
 │   │   └── main.tsx            
 │   │
 │   ├── .env.local              # Vite 前端環境變數
@@ -304,7 +302,6 @@ BREEZYDAY/
 │   ├── vite.config.ts
 │   └── tsconfig.json
 │
-├── img/                        # 專案文件用到的圖片
 └── README.md
 
 ```
@@ -398,17 +395,9 @@ AQI_API_KEY=your_moenv_aqi_api_key     # Required
 # Central Weather Administration (CWA) forecast API (F-C0032-001)
 CWA_API_KEY=your_cwa_api_key           # Required
 ```
-> [!WARNING]
-> Make sure **NOT** to commit your `.env` file to GitHub.
-> Add the following line to your `.gitignore` file : 
->
-> ```
-> .env
-> ```
 
 ## Important Code
-
-### 1. CWA Weather API Integration (Dataset: F-C0032-001, Secured API Key)
+### 1. CWA Weather API (F-C0032-001)
 ```python
 @app.get("/api/weather/today-range")
 def get_today_temp_range():
@@ -417,27 +406,31 @@ def get_today_temp_range():
         "format": "JSON",
         "locationName": request.args.get("locationName", "臺北市"),
     }
+
     resp = requests.get(
         "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001",
         params=params,
         timeout=10,
     )
-    data = resp.json()
-    loc = data["records"]["location"][0]
-    # ... extract MaxT, MinT, PoP12h, Wx ...
 
+    data = resp.json()
+    location = data["records"]["location"][0]
+
+    # Extract MaxT, MinT, PoP12h, Wx...
     return jsonify({
         "success": True,
-        "locationName": loc["locationName"],
+        "locationName": location["locationName"],
         "maxTemp": max_temp,
         "minTemp": min_temp,
         "tempDiff": temp_diff,
         "weatherDesc": wx_str,
     })
 ```
-Retrieves today’s temperature range, and weather description directly from the CWA open data API.
 
-### 2. MOENV AQI Proxy (Dataset: aqx_p_432,Secured API Key)
+This endpoint retrieves today’s MaxT, MinT, temperature difference, and weather description directly from Taiwan CWA’s F-C0032-001 dataset.
+
+
+### 2. MOENV AQI API (aqx_p_432)
 ```python
 @app.get("/api/aqi")
 def get_aqi():
@@ -445,21 +438,23 @@ def get_aqi():
     base_url = os.getenv("AQI_API_URL", "https://data.moenv.gov.tw/api/v2/aqx_p_432")
 
     url = f"{base_url}?api_key={api_key}&format=json"
+
     resp = requests.get(url, timeout=8)
     resp.raise_for_status()
+
     return jsonify(resp.json())
 ```
-Fetches real-time AQI, PM2.5, and related air-quality data from the MOENV dataset aqx_p_432.
 
-### 3. Building Gemini Prompts from Feedback + Today’s Environment
+This backend proxy fetches AQI, PM2.5, and related air-quality data.
+Using a proxy ensures the API key is never exposed on the frontend.
+
+### 3. Gemini API
+### 3-1. Building Gemini Prompt Using Feedback History + Today’s Environment
 ```python
 def build_allergy_prompt(feedbacks: List[Dict], today_env: Dict) -> str:
-    # build environment lines
-    # build history lines from the last 10 feedback documents
-    # ...
     prompt = f"""
     You are an allergy assistant for a weather and outfit recommendation dashboard.
-    ...
+
     User history:
     {history_block}
 
@@ -472,38 +467,20 @@ def build_allergy_prompt(feedbacks: List[Dict], today_env: Dict) -> str:
     """
     return textwrap.dedent(prompt).strip()
 ```
-Combines the user’s latest 10 feedback records with today’s AQI and temperature to generate a structured prompt for Gemini.
 
-### 4. Calling Gemini for Personalized Outfit Suggestions
+This function combines:
 
-```python
-@app.route("/api/ai/outfit", methods=["POST", "OPTIONS"])
-@jwt_required()
-def get_outfit_suggestion():
-    body = request.get_json() or {}
-    api_key = body.get("geminiApiKey")
-    env = body.get("env") or {}
+- today’s AQI and temperature
 
-    today_env = {
-        "tempMin": env.get("tempMin"),
-        "tempMax": env.get("tempMax"),
-        "rainPop": env.get("rainPop"),
-        "weatherDesc": env.get("weatherDesc"),
-        "aqi": env.get("aqi"),
-    }
+- the user’s latest 10 feedback log
 
-    prompt = build_outfit_prompt(today_env)
-    lines = call_gemini(api_key, prompt)
+  to generate a well-structured prompt for Gemini.
 
-    return jsonify({
-        "success": True,
-        "top":    lines[0] if len(lines) > 0 else "",
-        "outer":  lines[1] if len(lines) > 1 else "",
-        "bottom": lines[2] if len(lines) > 2 else "",
-        "note":   lines[3] if len(lines) > 3 else "",
-    })
-```
-This endpoint receives today’s environment, builds a structured prompt, calls Gemini, and maps the four returned lines into `top`, `outer`, `bottom`, and a short note that can be rendered directly on the frontend.
+
+### 3-2. Calling Gemini for Personalized Outfit Suggestions
+
+
+
 
 ## Credits
 - Central Weather Administration (CWA) Open Data — F-C0032-001 Forecast API  
