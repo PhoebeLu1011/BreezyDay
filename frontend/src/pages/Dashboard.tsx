@@ -105,7 +105,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const [aqiValue, setAqiValue] = useState<number | null>(null);
 
   // 今日溫度資訊
-  const [tempLocation, setTempLocation] = useState<string>("");
+  //const [tempLocation, setTempLocation] = useState<string>("");
   const [tempMin, setTempMin] = useState<number | null>(null);
   const [tempMax, setTempMax] = useState<number | null>(null);
   const [tempDiff, setTempDiff] = useState<number | null>(null);
@@ -298,7 +298,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         const data = await res.json();
 
         if (data.success) {
-          setTempLocation(data.locationName || locationName);
+          //setTempLocation(data.locationName || locationName);
           setTempMin(data.minTemp ?? data.minT ?? null);
           setTempMax(data.maxTemp ?? data.maxT ?? null);
           setTempDiff(data.tempDiff ?? data.diff ?? null);
@@ -340,7 +340,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           const numAqi = Number(fallback.aqi);
           setAqiValue(Number.isFinite(numAqi) ? numAqi : null);
 
-          setTempLocation(`${fallback.county} ${fallback.site}`.trim());
+          //setTempLocation(`${fallback.county} ${fallback.site}`.trim());
           await loadTempByLocation(fallback.county || "臺北市");
           return;
         }
@@ -361,7 +361,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             const numAqi = Number(target.aqi);
             setAqiValue(Number.isFinite(numAqi) ? numAqi : null);
 
-            setTempLocation(`${target.county} ${target.site}`.trim());
+            //setTempLocation(`${target.county} ${target.site}`.trim());
             await loadTempByLocation(target.county || "臺北市");
           },
           async (err) => {
@@ -378,7 +378,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             const numAqi = Number(fallback.aqi);
             setAqiValue(Number.isFinite(numAqi) ? numAqi : null);
 
-            setTempLocation(`${fallback.county} ${fallback.site}`.trim());
+            //setTempLocation(`${fallback.county} ${fallback.site}`.trim());
             await loadTempByLocation(fallback.county || "臺北市");
           }
         );
