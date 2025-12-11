@@ -95,9 +95,23 @@
   padding-bottom: 6px;
 }
 
+/* =============== Row Wrapper (transparent)=============== */
+
+.history-row-wrapper {
+  margin-top: 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.history-row-wrapper:hover {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
 /* =============== Header & Row (Grid) =============== */
 
-/* Header row + 每一列資料，用同一個 grid 定義 */
 .history-header-row,
 .history-row {
   display: grid;
@@ -118,13 +132,13 @@
   column-gap: 12px;
   align-items: center;
   width: 100%;
-  min-width: 1100px; /* 超過就讓 scroller 出現 scrollbar */
+  min-width: 1100px; 
 }
 
 /* Header only */
 .history-header-row {
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(186, 202, 226, 0.8);
+  border-bottom: none;
 }
 
 .history-header-cell {
@@ -133,21 +147,11 @@
   color: #5f7288;
 }
 
-/* Data row card */
 .history-row {
-  margin-top: 10px;
   padding: 12px 14px;
-  border-radius: 18px;
-  background: #ffffff;                 /* ← 整排卡片白色背景 */
-  border: 1px solid rgba(222, 230, 242, 0.95);
-  box-shadow: 0 8px 20px rgba(15, 35, 72, 0.08);
-  transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.1s ease;
-}
-
-.history-row:hover {
-  background: #f4f7fd;
-  box-shadow: 0 11px 26px rgba(15, 35, 72, 0.14);
-  transform: translateY(-1px);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 /* =============== Cell styles =============== */
@@ -209,7 +213,7 @@
 
   .history-header-row,
   .history-row {
-    min-width: 900px; /* 手機就左右滑 */
+    min-width: 900px; 
   }
 
   .history-row {
