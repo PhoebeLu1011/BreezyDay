@@ -28,7 +28,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
       }
       onAuthSuccess();
     } catch (err: any) {
-      setError(err.message || "發生錯誤");
+      setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -57,8 +57,8 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
         <p className="auth-subtitle">
           {mode === "login"
-            ? "登入以使用個人化天氣與穿搭建議"
-            : "建立帳號，開始記錄你的每一天"}
+            ? "Log in for personalized Breezy Day weather & outfit recommendations."
+            : "Create an account and begin your Breezy Day."}
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -74,7 +74,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
           </label>
 
           <label className="auth-label">
-            密碼
+            Password
             <input
               className="auth-input"
               type="password"
@@ -84,7 +84,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
             />
           </label>
 
-          <p className="auth-hint">建議至少 6 碼，包含英數。</p>
+          <p className="auth-hint">At least 6 characters, including letters and numbers.</p>
 
           {error && <div className="auth-error">{error}</div>}
 
@@ -93,14 +93,14 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
             type="submit"
             disabled={loading}
           >
-            {loading ? "送出中..." : mode === "login" ? "登入" : "註冊"}
+            {loading ? "Processing..." : mode === "login" ? "Log in" : "Join Breezy Day"}
           </button>
         </form>
 
         <div className="auth-toggle-text">
           {mode === "login" ? (
             <>
-              還沒有帳號？{" "}
+              Don’t have an account?{" "}
               <span
                 className="auth-link"
                 onClick={() => {
@@ -108,12 +108,12 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
                   setError(null);
                 }}
               >
-                建立帳號
+                Create one
               </span>
             </>
           ) : (
             <>
-              已經有帳號了？{" "}
+              Already have an account?{" "}
               <span
                 className="auth-link"
                 onClick={() => {
@@ -121,7 +121,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
                   setError(null);
                 }}
               >
-                前往登入
+                Log in
               </span>
             </>
           )}
