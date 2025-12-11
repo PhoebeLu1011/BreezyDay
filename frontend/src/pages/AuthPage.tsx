@@ -89,7 +89,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
           {error && <div className="auth-error">{error}</div>}
 
           <button
-            className="btn-primary auth-submit-btn"
+            className="authpage-btn-primary auth-submit-btn"
             type="submit"
             disabled={loading}
           >

@@ -1,7 +1,7 @@
-# Breezy Day
+# BreezyDay
 ## Project Overview
 
-**Breezy Day** is an AI-powered weather and allergy assistant that integrates CWA weather data, MOENV AQI, and user feedback into one dashboard.
+**BreezyDay** is an AI-powered weather and allergy assistant that integrates CWA weather data, MOENV AQI, and user feedback into one dashboard.
 It predicts daily allergy risk and provides personalized outfit + prevention suggestions using Gemini.
 
 This project focuses on solving three practical issues faced by allergy-sensitive users:
@@ -9,7 +9,7 @@ This project focuses on solving three practical issues faced by allergy-sensitiv
 ### 1. Scattered environmental data
 
 Weather, AQI, and other air-pollution indicators are scattered across different sources.
-Breezy Day **consolidates key environmental data into a single, real-time dashboard**.
+BreezyDay **consolidates key environmental data into a single, real-time dashboard**.
 
 ### 2. No intuitive allergy insight
 

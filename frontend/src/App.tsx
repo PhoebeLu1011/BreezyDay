@@ -17,6 +17,7 @@ type Page =
   | "auth"
   | "dashboard"
   | "aqi"
+  | "aqiTable"
   | "profile"
   | "feedback"
   | "feedbackHistory";
@@ -29,6 +30,7 @@ const VANTA_PAGES: Page[] = [
   "auth",
   "dashboard",
   "aqi",
+  "aqiTable",
   "profile",
   "feedback",
   "feedbackHistory",
@@ -50,6 +52,7 @@ export default function App() {
       if (
         saved === "dashboard" ||
         saved === "aqi" ||
+        saved === "aqiTable" ||
         saved === "profile" ||
         saved === "feedback" ||
         saved === "feedbackHistory"
@@ -98,7 +101,13 @@ export default function App() {
       <>
         {page === "dashboard" && <Dashboard onNavigate={go} />}
 
-        {page === "aqi" && <AQIPage />}
+        {page === "aqi" && (
+          <AQIPage initialMode="dashboard" onNavigate={go} />
+        )}
+
+        {page === "aqiTable" && (
+          <AQIPage initialMode="table" onNavigate={go} />
+        )}
 
         {page === "profile" && (
           <ProfilePage
