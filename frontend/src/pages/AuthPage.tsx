@@ -108,7 +108,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
                   setError(null);
                 }}
               >
-                Create one
+                Create one!
               </span>
             </>
           ) : (
