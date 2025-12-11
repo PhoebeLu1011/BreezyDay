@@ -13,12 +13,16 @@ import {
 } from "./aqiUtils";
 import "./aqi.css";
 
-// ✅ 從這裡開始改：改成打自己的後端，而不是直接打環境部
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 const AQI_API_URL = `${API_BASE_URL}/api/aqi`;
 
-const AQIPage: React.FC = () => {
+interface AQIPageProps {
+  initialMode: "dashboard" | "table";
+  onNavigate: (page: "aqi" | "aqiTable") => void;
+}
+
+const AQIPage: React.FC<AQIPageProps> = ({ initialMode, onNavigate }) => {
   const [rows, setRows] = useState<StationRow[]>([]);
   const [currentStation, setCurrentStation] = useState<StationRow | null>(null);
   const [watchedStations, setWatchedStations] = useState<StationRow[]>([]);
@@ -28,8 +32,7 @@ const AQIPage: React.FC = () => {
   const [statusText, setStatusText] = useState("載入中...");
   const [loading, setLoading] = useState(false);
 
-  // ⭐ 新增：控制是「儀表板模式」還是「表格模式」
-  const [viewMode, setViewMode] = useState<"dashboard" | "table">("dashboard");
+  // const [viewMode, setViewMode] = useState<"dashboard" | "table">("dashboard");
 
   // 抓 API（打自己的 Flask 後端）
   const loadData = async (initial = false) => {
@@ -53,7 +56,7 @@ const AQIPage: React.FC = () => {
         status: r.status ?? r.Status ?? "",
         publishTime: r.publishtime || r.PublishTime || "",
         lat: numOrNull(r.latitude ?? r.Latitude),
-        lon: numOrNull(r.longitude ?? r.Longitude),
+        lon: numOrNull(r.longitude ?? r.Latitude),
       }));
 
       setRows(mapped);
@@ -215,87 +218,90 @@ const AQIPage: React.FC = () => {
     ? `${currentStation.county || ""} ${currentStation.site || ""}`.trim()
     : "未知測站";
 
+  // ========================
+  //   Table Page 模式
+  // ========================
+  if (initialMode === "table") {
+    return (
+      <div className="page">
+        <div style={{ marginBottom: "16px" }}>
+          <button
+            className="table-back"
+            onClick={() => onNavigate("aqi")}
+          >
+            ← Back to AQI Dashboard
+          </button>
+        </div>
+
+        <AQITable
+          rows={filteredRows}
+          rawRowsCount={rows.length}
+          keyword={keyword}
+          sortKey={sortKey}
+          levelFilter={levelFilter}
+          onKeywordChange={setKeyword}
+          onSortKeyChange={setSortKey}
+          onLevelFilterChange={setLevelFilter}
+          onRefresh={() => loadData(false)}
+          onReset={handleResetFilters}
+          statusText={statusText}
+          loading={loading}
+          onSelectRow={(r) => {
+            setCurrentStation(r);
+          }}
+          aqiClass={aqiClass}
+        />
+      </div>
+    );
+  }
+
+  // ========================
+  //   Dashboard Page 模式
+  // ========================
   return (
     <div className="page">
-      {viewMode === "dashboard" ? (
-        <>
-          {/* 上半部 Dashboard（主卡片 + 污染物卡片 + 圖表） */}
-          <section className="top-section">
-            <AQIDashboard
-              locationText={locationText}
-              aqiValue={currentStation?.aqi ?? "--"}
-              aqiInfo={mainInfo}
-              aqiClassName={
-                mainInfo
-                  ? `level-status ${mainInfo.className}`
-                  : "level-status"
-              }
-              barPercent={
-                currentStation
-                  ? Math.min(
-                      100,
-                      ((Number(currentStation.aqi) || 0) / 300) * 100,
-                    )
-                  : 0
-              }
-              onCurrentLocation={handleCurrentLocation}
-              onAddCity={handleAddCity}
-              watchedStations={watchedStations}
-              onClickWatched={(station) => setCurrentStation(station)}
-              onRemoveWatched={handleRemoveWatched}
-              // ⭐ 點這顆按鈕 → 切去 Table 畫面
-              onGoTable={() => setViewMode("table")}
-            />
+      <section className="top-section">
+        <AQIDashboard
+          locationText={locationText}
+          aqiValue={currentStation?.aqi ?? "--"}
+          aqiInfo={mainInfo}
+          aqiClassName={
+            mainInfo
+              ? `level-status ${mainInfo.className}`
+              : "level-status"
+          }
+          barPercent={
+            currentStation
+              ? Math.min(
+                  100,
+                  ((Number(currentStation.aqi) || 0) / 300) * 100,
+                )
+              : 0
+          }
+          onCurrentLocation={handleCurrentLocation}
+          onAddCity={handleAddCity}
+          watchedStations={watchedStations}
+          onClickWatched={(station) => setCurrentStation(station)}
+          onRemoveWatched={handleRemoveWatched}
+          onGoTable={() => onNavigate("aqiTable")}
+        />
 
-            {/* Main Pollutants Today */}
-            <PollutantCards
-              pm25={currentPollutants.pm25}
-              pm10={currentPollutants.pm10}
-              o3={currentPollutants.o3}
-              so2={currentPollutants.so2}
-            />
+        {/* Main Pollutants Today */}
+        <PollutantCards
+          pm25={currentPollutants.pm25}
+          pm10={currentPollutants.pm10}
+          o3={currentPollutants.o3}
+          so2={currentPollutants.so2}
+        />
 
-            {/* Pollutant Chart */}
-            <PollutantChart
-              pm25={currentPollutants.pm25}
-              pm10={currentPollutants.pm10}
-              o3={currentPollutants.o3}
-              so2={currentPollutants.so2}
-            />
-          </section>
-        </>
-      ) : (
-        <>
-          {/* Table 模式：上面一個「回儀表板」按鈕 + 全螢幕 AQITable */}
-          <div style={{ marginBottom: "16px" }}>
-            <button
-              className="btn btn-link"
-              onClick={() => setViewMode("dashboard")}
-            >
-              ← 回 AQI 儀表板
-            </button>
-          </div>
-
-          <AQITable
-            rows={filteredRows}
-            rawRowsCount={rows.length}
-            keyword={keyword}
-            sortKey={sortKey}
-            levelFilter={levelFilter}
-            onKeywordChange={setKeyword}
-            onSortKeyChange={setSortKey}
-            onLevelFilterChange={setLevelFilter}
-            onRefresh={() => loadData(false)}
-            onReset={handleResetFilters}
-            statusText={statusText}
-            loading={loading}
-            onSelectRow={(r) => {
-              setCurrentStation(r);
-            }}
-            aqiClass={aqiClass}
-          />
-        </>
-      )}
+        {/* Pollutant Chart */}
+        <PollutantChart
+          pm25={currentPollutants.pm25}
+          pm10={currentPollutants.pm10}
+          o3={currentPollutants.o3}
+          so2={currentPollutants.so2}
+        />
+      </section>
     </div>
   );
 };

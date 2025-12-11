@@ -20,8 +20,7 @@ const TOWNS: { city: string; district: string; lat: number; lon: number }[] = [
   { city: "臺北市", district: "南港區", lat: 25.0530, lon: 121.6065 },
   { city: "臺北市", district: "文山區", lat: 24.9982, lon: 121.5589 },
 
-  // ⭐⭐⭐ 要全台灣368筆我可以一次幫你貼，不然這裡先給你示例幾筆
-  // 如果你說「我要全部鄉鎮資料」，我可以馬上生成完整 dataset。
+
 ];
 
 /** Haversine distance (公里) */
@@ -49,7 +48,7 @@ export function useNearestStation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /** ⭐ 找最近鄉鎮 */
+  /** 找最近鄉鎮 */
   const locateTown = useCallback(
     (lat: number, lon: number) => {
       let nearest = TOWNS[0];
@@ -69,7 +68,7 @@ export function useNearestStation() {
     []
   );
 
-  /** ⭐ 尋找 GPS */
+  /** 尋找 GPS */
   const refresh = useCallback(() => {
     setLoading(true);
     setError(null);

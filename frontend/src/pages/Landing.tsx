@@ -1,28 +1,47 @@
+// src/pages/Landing.tsx
+import { useEffect, useState } from "react";
+import "../styles/Landing.css";
+
 interface LandingProps {
   onEnter: () => void;
 }
 
 export default function Landing({ onEnter }: LandingProps) {
-  return (
-    <div className="bg-landing">
-      {/* 如果之後有背景圖，可以在這裡再加一層 overlay */}
-      <div style={{ textAlign: "center" }}>
-        <h1
-          style={{
-            fontSize: "3.4rem",
-            marginBottom: 8,
-            color: "#355d7f",
-            fontWeight: 600,
-          }}
-        >
-          BreezyDay
-        </h1>
-        <p style={{ color: "#476682", marginBottom: 32 }}>
-          Dress light, breathe right.
-        </p>
+  const [displayText, setDisplayText] = useState(
+    "Your personal weather assistant."
+  );
 
-        <button className="btn-primary" onClick={onEnter}>
-          Enter
+  useEffect(() => {
+    const texts = [
+      "Your personal weather assistant.",
+      "Outfit suggestions powered by AI.",
+      "Track your daily mood & feedback.",
+    ];
+    let index = 0;
+
+    const interval = setInterval(() => {
+      index = (index + 1) % texts.length;
+      setDisplayText(texts[index]);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="landing-page-root">
+      <div className="landing-clouds" aria-hidden="true">
+        <span className="cloud cloud-1" />
+        <span className="cloud cloud-2" />
+        <span className="cloud cloud-3" />
+        <span className="cloud cloud-4" />
+      </div>
+      <div className="landing-inner">
+        <h1 className="landing-title">BreezyDay</h1>
+        <div className="landing-underline" />
+        <p className="landing-subtitle">{displayText}</p>
+
+        <button className="landing-btn-primary" onClick={onEnter}>
+          Get Started
         </button>
       </div>
     </div>

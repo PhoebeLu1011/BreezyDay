@@ -1,7 +1,254 @@
-## Breezy Day
+# BreezyDay
+## Project Overview
 
-"Breezy Day" is a website designed for people who frequently experience allergies.
-### | File Structure
+**BreezyDay** is an AI-powered weather and allergy assistant that integrates CWA weather data, MOENV AQI, and user feedback into one dashboard.
+It predicts daily allergy risk and provides personalized outfit + prevention suggestions using Gemini.
+
+This project focuses on solving three practical issues faced by allergy-sensitive users:
+
+### 1. Scattered environmental data
+
+Weather, AQI, and other air-pollution indicators are scattered across different sources.
+BreezyDay **consolidates key environmental data into a single, real-time dashboard**.
+
+### 2. No intuitive allergy insight
+
+Typical apps show AQI numbers, but users still don't know:
+“Will I feel uncomfortable today?”
+BreezyDay **converts AQI into Low / Moderate / High allergy-risk levels**.
+
+### 3. No actionable guidance
+
+Users still struggle deciding:
+“What should I wear?”  
+“Should I bring a mask?”
+
+The system uses Gemini together with **user feedback history and real-time environmental data** to **generate personalized outfit and allergy-prevention suggestions**.
+
+## Features Overview 
+- **Integrated Environment Dashboard**
+Real-time weather, AQI, temperature range , and weather phenomenon in one place. 
+
+- **Allergy Risk Assessment** 
+Converts AQI indicator into an intuitive Low / Moderate / High risk level
+
+- **AI Personalized Suggestions** 
+Gemini-powered outfit recommendations and allergy-prevention advice, based on user feedback and live environment data. 
+
+- **Secure Authentication** 
+JWT-based login, registration, and protected endpoints.
+
+- **User Feedback Loop** 
+Stores user feeling/response logs in MongoDB Atlas to refine future AI recommendations. 
+
+- **External API Integration**
+Fully automated data retrieval from CWA Weather API and MOENV AQI API.
+
+## Tech Stack Overview 
+### Frontend
+- React + Vite (TypeScript)
+- Axios / Fetch for API requests
+- JWT-based authentication handling
+
+### Backend
+- Flask (Python) RESTful API
+- Flask-JWT-Extended for authentication
+- Flask-Bcrypt for password hashing
+- CORS and backend proxy for secure API key usage
+
+### External Data Sources
+- CWA Open Data API (F-C0032-001): temperature, weather, weather phenomenon
+- MOENV AQI API: AQI / PM2.5 data 
+(Both API proxied through backend)
+
+### AI Integration
+- Google Gemini API (gemini-2.5-flash-lite)
+- Custom prompts combining today's environment and recent user feedback
+
+### Database
+- MongoDB Atlas (NoSQL)
+- Collections: `users`, `feedback`
+
+### Infrastructure
+- Environment variables via `.env`
+
+
+## System Architecture 
+```mermaid
+---
+config:
+  theme: base
+  look: neo
+---
+flowchart LR
+
+  %% ========== CLIENT ==========
+  subgraph CLIENT[Client]
+    BROWSER[User Browser]
+  end
+
+  %% ========== FRONTEND ==========
+  subgraph FE[Frontend - React + Vite]
+
+    DASH[Dashboard Page<br/>Weather, AQI, AI Suggestions]
+    AQI_PAGE[AQI Detail Page<br/>AQI, PM2.5, PM10, O3...]
+    PROFILEUI[Profile Page]
+    FEEDBACKUI[Feedback Page]
+    AUTHUI[Auth Pages - Login/Register]
+    
+  end
+
+  BROWSER -->|SPA Routing| DASH
+  DASH -->|Client-side Routing| AQI_PAGE
+
+  %% ========== BACKEND ==========
+  subgraph BE[Backend - Flask API]
+
+    %% Auth & Profile Block
+    subgraph AUTHBLK[Auth & Profile]
+      AUTHAPI[/ /api/auth/register<br/>/api/auth/login<br/>/api/auth/me /]
+      PROFILE[/ /api/profile /]
+    end
+
+    %% Environment APIs Block
+    subgraph ENVBLK[Environment Services]
+      WEATHER[/ /api/weather/today-range /]
+      AQI[/ /api/aqi /]
+    end
+
+    %% AI Services + Cache Block
+    subgraph AIBLK[AI Services<br/>with Per-User Daily Cache]
+      ALLERGYAI[/ /api/ai/allergy-tips /]
+      OUTFITAI[/ /api/ai/outfit /]
+    end
+
+    %% Feedback Block
+    FEEDBACKAPI[/ /api/feedback （POST/GET）/]
+
+    HEALTH[/ /health /]
+
+  end
+
+
+  %% ========== DATABASE ==========
+  subgraph DB[MongoDB Atlas]
+    USERS[(users)]
+    FB[(feedback)]
+    AISUG[(ai_suggestions<br/>daily AI cache<br/>per-user, per-type)]
+  end
+
+  %% ========== EXTERNAL APIS ==========
+  subgraph EXT[External APIs]
+    CWA[CWA Weather API<br/>F-C0032-001]
+    MOENV[MOENV AQI API<br/>aqx_p_432]
+    GEM[Gemini API]
+  end
+
+
+  %% ========== FRONTEND → BACKEND CALLS ==========
+  AUTHUI -->|JSON + JWT| AUTHAPI
+  PROFILEUI -->|JWT| PROFILE
+
+  DASH --> WEATHER
+  DASH --> AQI
+  DASH -->|JWT + env + （forceRefresh）| ALLERGYAI
+  DASH -->|JWT + env + （forceRefresh）| OUTFITAI
+  DASH --> FEEDBACKAPI
+  DASH --> HEALTH
+
+  AQI_PAGE --> AQI
+  FEEDBACKUI --> FEEDBACKAPI
+  PROFILEUI --> PROFILE
+
+
+  %% ========== BACKEND → DATABASE ==========
+  AUTHAPI --> USERS
+  PROFILE --> USERS
+
+  FEEDBACKAPI --> FB
+  ALLERGYAI --> FB
+  OUTFITAI --> FB
+
+  ALLERGYAI --> AISUG
+  OUTFITAI --> AISUG
+
+  %% ========== BACKEND → EXTERNAL APIS ==========
+  WEATHER -->|CWA_API_KEY| CWA
+  AQI -->|AQI_API_KEY| MOENV
+
+  ALLERGYAI -->|prompt<br/>（history + env）| GEM
+  OUTFITAI -->|prompt<br/>（history + env）| GEM
+
+
+  %% ========== AI CALL POLICY NOTE ==========
+  POLICY_NOTE[Daily AI Call Policy<br/><br/>• Each user can trigger each AI service （Allergy / Outfit） up to twice per day.<br/>• Call #1: Automatically generated when the Dashboard loads.<br/>• Call #2: User-initiated refresh via forceRefresh.<br/>• After the daily limit is reached, the backend returns cached results from ai_suggestions instead of calling Gemini again.]
+
+  AIBLK -.-> POLICY_NOTE
+  AISUG -.-> POLICY_NOTE
+
+```
+## ERD
+```mermaid
+---
+config:
+  layout: dagre
+---
+erDiagram
+	direction TB
+	USERS {
+		ObjectId _id  ""  
+		Date createdAt  ""  
+		string dateOfBirth  ""  
+		string email  ""  
+		string password_hash  ""  
+		string username  ""  
+		string[] preferredStyles  ""  
+		string gender  ""  
+	}
+
+	FEEDBACK {
+		ObjectId _id  ""  
+		string allergyFeel  ""  
+		int allergyImpact  ""  
+		string allergyMed  ""  
+		string[] allergySymptoms  ""  
+		string changeOutfit  ""  
+		Date createdAt  ""  
+		int envAqi  ""  
+		string envAqiSite  ""  
+		int envMaxTemp  ""  
+		int envMinTemp  ""  
+		int envTempDiff  ""  
+		string envTempLocation  ""  
+		string feedbackDate  ""  
+		string outfitAccessories  ""  
+		string outfitBottom  ""  
+		string outfitShoes  ""  
+		string outfitTop  ""  
+		int recommendationRating  ""  
+		string temperatureFeel  ""  
+		ObjectId userId  ""  
+	}
+
+	AI_SUGGESTIONS {
+		ObjectId _id  ""  
+		ObjectId userId  ""  
+		string type  ""  
+		string date  ""  
+		Date generatedAt  ""  
+		int callsToday  ""  
+		string resultTop  ""  
+		string resultOuter  ""  
+		string resultBottom  ""  
+		string resultNote  ""  
+		string[] resultTips  ""  
+	}
+
+	USERS||--o{FEEDBACK:"has feedback"
+	USERS||--o{AI_SUGGESTIONS:"has ai suggestions"
+```
+## File Structure
+
 ```
 BREEZYDAY/
 │
@@ -60,93 +307,209 @@ BREEZYDAY/
 ├── img/                        # 專案文件用到的圖片
 └── README.md
 
-```
 
-## | How to run 還沒改
-### Prerequisites
-- Node.js 18+  
+
+
+
+## High-Level API Endpoints (Simplified) 
+
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Create a new account |
+| POST | `/api/auth/login` | Login and receive JWT token |
+| GET  | `/api/auth/me` | Get authenticated user information |
+
+### Profile
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET  | `/api/profile` | Retrieve user profile |
+| PUT  | `/api/profile` | Update profile fields |
+
+### Weather (CWA)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/weather/today-range` | Today’s max/min temperature, temp diff, weather description (API key protected) |
+
+### Air Quality (MOENV)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/aqi` | Real-time AQI/PM2.5 data (backend-proxied, API key protected) |
+
+### Feedback
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/feedback` | Submit daily feedback with environment data |
+| GET  | `/api/feedback` | Get all feedback for current user |
+
+### AI (Gemini)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/ai/allergy-tips` | Generate 5 allergy-prevention suggestions |
+| POST | `/api/ai/outfit` | Generate personalized outfit recommendations |
+
+### Health
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Backend health check |
+
+
+## Getting Started 
+
+### 1. Prerequisites
+
+- Node.js 18+
 - npm (or yarn)
-- MongoDB Atlas account (URI already configured in `.env`)
+- Python 3.10+
+- MongoDB Atlas account (MONGO_URI set in `.env`)
 
----
-### Frontend(React+Vite)
-```cmd
-# 進入前端資料夾
-cd breezy_day
 
-# 安裝依賴
+### 2. Clone the repository
+```bash
+git clone https://github.com/PhoebeLu1011/BreezyDay.git
+cd breezyday
+```
+### 3. Setup Frontend (React + Vite)
+```bash
+cd frontend
 npm install
-
-# 啟動開發伺服器
 npm run dev
 ```
-前端預設在 http://localhost:5173
-
-### Backend
+### 4. Setup Backend (Flask)
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
 ```
-# 進入後端資料夾
-cd breezy_day/server
+### 5. Environment Variables
+Create a `.env` file under backend/:
+```bash
+# ===== Database =====
+# MongoDB Atlas connection
+MONGO_URI=your_mongodb_atlas_connection_string
 
-# 安裝依賴
-npm install
+# ===== Authentication =====
+JWT_SECRET_KEY=your_jwt_secret_key
 
-# 建立環境變數檔 .env
+# ===== External APIs =====
+# MOENV Air Quality API
+AQI_API_KEY=your_moenv_aqi_api_key     # Required
 
-
+# Central Weather Administration (CWA) forecast API (F-C0032-001)
+CWA_API_KEY=your_cwa_api_key           # Required
 ```
-`.env`:
+> [!WARNING]
+> Make sure **NOT** to commit your `.env` file to GitHub.
+> Add the following line to your `.gitignore` file : 
+>
+> ```
+> .env
+> ```
 
-```env
-MONGO_URI=mongodb+srv://breezyday_user:<password>@cluster0.xxxxxx.mongodb.net/breezyday
-JWT_SECRET=change_this_secret
-PORT=5000
+## Important Code
+
+### 1. CWA Weather API Integration (Dataset: F-C0032-001, Secured API Key)
+```python
+@app.get("/api/weather/today-range")
+def get_today_temp_range():
+    params = {
+        "Authorization": app.config["CWA_API_KEY"],
+        "format": "JSON",
+        "locationName": request.args.get("locationName", "臺北市"),
+    }
+    resp = requests.get(
+        "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001",
+        params=params,
+        timeout=10,
+    )
+    data = resp.json()
+    loc = data["records"]["location"][0]
+    # ... extract MaxT, MinT, PoP12h, Wx ...
+
+    return jsonify({
+        "success": True,
+        "locationName": loc["locationName"],
+        "maxTemp": max_temp,
+        "minTemp": min_temp,
+        "tempDiff": temp_diff,
+        "weatherDesc": wx_str,
+    })
 ```
+Retrieves today’s temperature range, and weather description directly from the CWA open data API.
 
-啟動:
+### 2. MOENV AQI Proxy (Dataset: aqx_p_432,Secured API Key)
+```python
+@app.get("/api/aqi")
+def get_aqi():
+    api_key = os.getenv("AQI_API_KEY")
+    base_url = os.getenv("AQI_API_URL", "https://data.moenv.gov.tw/api/v2/aqx_p_432")
 
-```cmd
-# 啟動後端伺服器 (自動偵測修改)
-py app.py
-(兩個應該都可以跑)
+    url = f"{base_url}?api_key={api_key}&format=json"
+    resp = requests.get(url, timeout=8)
+    resp.raise_for_status()
+    return jsonify(resp.json())
 ```
+Fetches real-time AQI, PM2.5, and related air-quality data from the MOENV dataset aqx_p_432.
 
-後端預設在 http://localhost:5000
+### 3. Building Gemini Prompts from Feedback + Today’s Environment
+```python
+def build_allergy_prompt(feedbacks: List[Dict], today_env: Dict) -> str:
+    # build environment lines
+    # build history lines from the last 10 feedback documents
+    # ...
+    prompt = f"""
+    You are an allergy assistant for a weather and outfit recommendation dashboard.
+    ...
+    User history:
+    {history_block}
 
-### |　Motivation
+    Today environment:
+    {chr(10).join(env_lines) if env_lines else "No environment info."}
 
-As someone who often suffers from allergies, this website aims to provide daily weather and air quality insights to help users prepare suitable outfits and minimize allergic reactions.
+    Task:
+    Based on the history and today's environment, give EXACTLY FIVE short
+    bullet-point suggestions...
+    """
+    return textwrap.dedent(prompt).strip()
+```
+Combines the user’s latest 10 feedback records with today’s AQI and temperature to generate a structured prompt for Gemini.
 
-### |　System Architecture Overview
+### 4. Calling Gemini for Personalized Outfit Suggestions
 
-<img src="img/SystemArchitecture.png" width="500"/>
+```python
+@app.route("/api/ai/outfit", methods=["POST", "OPTIONS"])
+@jwt_required()
+def get_outfit_suggestion():
+    body = request.get_json() or {}
+    api_key = body.get("geminiApiKey")
+    env = body.get("env") or {}
 
-The system includes four modules:  Dashboard, Allergy Index, Weather Forecast, and Rain Probability.
+    today_env = {
+        "tempMin": env.get("tempMin"),
+        "tempMax": env.get("tempMax"),
+        "rainPop": env.get("rainPop"),
+        "weatherDesc": env.get("weatherDesc"),
+        "aqi": env.get("aqi"),
+    }
 
-Each module retrieves specific data through the API Gateway, which connects to the Central Weather Administration and Taiwan EPA AQI Open Data APIs.
+    prompt = build_outfit_prompt(today_env)
+    lines = call_gemini(api_key, prompt)
 
-The Dashboard then integrates all the information to provide users with a comprehensive overview of weather and allergy conditions.
+    return jsonify({
+        "success": True,
+        "top":    lines[0] if len(lines) > 0 else "",
+        "outer":  lines[1] if len(lines) > 1 else "",
+        "bottom": lines[2] if len(lines) > 2 else "",
+        "note":   lines[3] if len(lines) > 3 else "",
+    })
+```
+This endpoint receives today’s environment, builds a structured prompt, calls Gemini, and maps the four returned lines into `top`, `outer`, `bottom`, and a short note that can be rendered directly on the frontend.
 
+## Credits
+- Central Weather Administration (CWA) Open Data — F-C0032-001 Forecast API  
+- Ministry of Environment (MOENV) — AQI & Air Quality Data  
+- Google Gemini API — Personalized outfit & allergy-prevention suggestions  
+- MongoDB Atlas — Cloud database service  
+- React / Vite / TypeScript  
+- Flask (Python) — Backend and external API integration
 
-### | 第一次提案記錄
-1. 加入gemini ai model(prompt json匯入)) 那感覺生成穿搭建議那邊就會使用到gemini會比較好
-2. 部署Render(再說)
-3. database(我自己比較喜歡用mongodb)
-database要幹嘛:
-- 登入登出系統
-- 儲存使用者回報資料
-    - 雖然今天可能24度 系統不覺得冷 但使用者覺得很冷要穿薄外套(過敏反應也適用)
-    - 使用者偏好的穿衣風格與形式(匹如說他就是喜歡穿短袖但會加很多外套在外面)
-所以目前的想像
-1. 會多一個介面about 使用者回報 (同時也可以進行我們想做的大數據分析)
-介面目前的想法
-(1) 問題
-- 輸入今天的穿搭是?
-- 那覺得今天的穿衣? 很冷/ 剛好/ 很熱\
-- 你覺得有甚麼特別需要調整的地方
-- 今日過敏反應: 嚴重/ 普通 / 無
-- 今天的建議跟實際適用的打分(?/10)
-- 其他想說的
-...
-2. 在主選單會有一個update profile/setting
-裡面可以放使用者反饋(setting) profile就是因應登入系統做的個人資料頁面
-- profile想像下面可能可以有視覺畫圖表記錄溫度跟使用者感受的部分(看時間決定 還沒想好)

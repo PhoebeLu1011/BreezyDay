@@ -1,6 +1,5 @@
-// src/features/aqi/AQITable.tsx
-import type { StationRow, SortKey } from "./aqiTypes";
-import type { AqiCategory } from "./aqiTypes";
+import type { StationRow, SortKey, AqiCategory } from "./aqiTypes";
+import "../../styles/AQITable.css";
 
 interface Props {
   rows: StationRow[];
@@ -36,81 +35,97 @@ const AQITable: React.FC<Props> = ({
   aqiClass,
 }) => {
   return (
-    <div className="table-wrapper">
-      <header>
-        <h1>空氣品質即時查詢 - 全站列表</h1>
-        <div id="controls">
-          <div className="aqi-scale-header">
-            <div className="aqi-scale-title">AQI Scale</div>
-            <div className="aqi-scale-filter">
-              <label>
-                依等級篩選列表：
-                <select
-                  id="aqi-level-filter"
-                  value={levelFilter}
-                  onChange={(e) =>
-                    onLevelFilterChange(e.target.value as AqiCategory | "all")
-                  }
-                >
-                  <option value="all">全部</option>
-                  <option value="good">良好 (0–50)</option>
-                  <option value="moderate">普通 (51–100)</option>
-                  <option value="usg">對敏感族群不健康 (101–150)</option>
-                  <option value="unhealthy">不健康 (151–200)</option>
-                  <option value="very">非常不健康 (201–300)</option>
-                  <option value="hazardous">危害 (301+)</option>
-                </select>
-              </label>
-            </div>
-          </div>
+    <section className="aqi-table-section">
+      {/* === Header  === */}
+      <div className="aqi-table-header">
+        <div className="aqi-table-title-block">
+          <h2 className="section-title">Real-time AQI Station List</h2>
+          <p className="aqi-table-subtitle">
+            Browse and filter all stations by city, name, or AQI category.
+          </p>
+        </div>
+
+        {/* === Control Panel === */}
+        <div className="aqi-table-controls">
+          <label className="aqi-table-filter">
+            Level:
+            <select
+              id="aqi-level-filter"
+              value={levelFilter}
+              onChange={(e) =>
+                onLevelFilterChange(e.target.value as AqiCategory | "all")
+              }
+            >
+              <option value="all">All</option>
+              <option value="good">Good (0–50)</option>
+              <option value="moderate">Moderate (51–100)</option>
+              <option value="usg">Unhealthy for SG (101–150)</option>
+              <option value="unhealthy">Unhealthy (151–200)</option>
+              <option value="very">Very Unhealthy (201–300)</option>
+              <option value="hazardous">Hazardous (301+)</option>
+            </select>
+          </label>
 
           <input
             id="keyword"
-            placeholder="搜尋站名 / 縣市"
+            className="aqi-table-input"
+            placeholder="Search station / city"
             value={keyword}
             onChange={(e) => onKeywordChange(e.target.value)}
           />
+
           <select
             id="sort"
+            className="aqi-table-select"
             value={sortKey}
             onChange={(e) => onSortKeyChange(e.target.value as SortKey)}
           >
-            <option value="aqi">依 AQI 排序</option>
-            <option value="pm25">依 PM2.5 排序</option>
-            <option value="pm10">依 PM10 排序</option>
-            <option value="site">依測站名稱排序</option>
+            <option value="aqi">Sort by AQI</option>
+            <option value="pm25">Sort by PM2.5</option>
+            <option value="pm10">Sort by PM10</option>
+            <option value="site">Sort by Station Name</option>
           </select>
-          <button id="refresh" className="btn-table" onClick={onRefresh}>
-            {loading ? "重新整理中..." : "重新整理"}
+
+          <button
+            id="refresh"
+            className="city-btn glass aqi-table-btn"
+            onClick={onRefresh}
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
           </button>
+
           <button
             id="showAll"
-            className="btn-table secondary"
+            className="city-btn glass aqi-table-btn secondary"
             onClick={onReset}
           >
-            顯示全部
+            Show All
           </button>
         </div>
-      </header>
-
-      <div id="status">
-        {statusText}（原始資料共 {rawRowsCount} 筆）
       </div>
 
-      <table>
+      {/* Status text */}
+      <div className="aqi-table-status">
+        {statusText} (Total: {rawRowsCount} records)
+      </div>
+
+      {/* Main data table */}
+      <table className="aqi-table">
         <thead>
           <tr>
-            <th data-key="county">縣市</th>
-            <th data-key="site">測站名稱</th>
+            <th data-key="county">City</th>
+            <th data-key="site">Station</th>
             <th data-key="aqi">AQI</th>
             <th data-key="pm25">PM2.5</th>
             <th data-key="pm10">PM10</th>
             <th>O₃</th>
             <th>SO₂</th>
-            <th>狀態</th>
-            <th>發布時間</th>
+            <th>Status</th>
+            <th>Publish Time</th>
           </tr>
         </thead>
+
         <tbody>
           {rows.map((r) => (
             <tr
@@ -135,7 +150,7 @@ const AQITable: React.FC<Props> = ({
           ))}
         </tbody>
       </table>
-    </div>
+    </section>
   );
 };
 

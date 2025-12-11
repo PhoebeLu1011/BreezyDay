@@ -22,12 +22,12 @@ export function getAqiCategory(aqi: string | number | null): AqiCategory | null 
 
 export function getAqiInfo(aqi: string | number | null) {
   const n = Number(aqi) || 0;
-  if (n <= 50) return { label: "良好", className: "level-good" };
-  if (n <= 100) return { label: "普通 (Moderate)", className: "level-moderate" };
-  if (n <= 150) return { label: "對敏感族群不健康", className: "level-usg" };
-  if (n <= 200) return { label: "對所有族群不健康", className: "level-unhealthy" };
-  if (n <= 300) return { label: "非常不健康", className: "level-very" };
-  return { label: "危害 (Hazardous)", className: "level-hazardous" };
+  if (n <= 50) return { label: "Good", className: "level-good" };
+  if (n <= 100) return { label: "Moderate", className: "level-moderate" };
+  if (n <= 150) return { label: "Unhealthy for Sensitive", className: "level-usg" };
+  if (n <= 200) return { label: "Unhealthy", className: "level-unhealthy" };
+  if (n <= 300) return { label: "Very Unhealthy", className: "level-very" };
+  return { label: "Hazardous", className: "level-hazardous" };
 }
 
 function toRad(d: number) {

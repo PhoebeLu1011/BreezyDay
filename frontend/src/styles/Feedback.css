@@ -1,184 +1,328 @@
-/* 讓整頁置中、左右留白一致 */
-.page-shell {
-  min-height: 100vh;
-  padding: 40px 0;
-  background: #dce8df;
-  display: flex;
-  justify-content: center;
+/* Feedback page – 改成貼近 ProfilePage 風格 */
+.feedback-page {
+  /* 元件同時有 .profile-page 和 .feedback-page，
+     這裡只做些微調，不去破壞 profile-page 的共用樣式 */
+  color: #1f2a44;
 }
 
-/* 內容容器：限制最大寬度、置中對齊 */
-.feedback-container {
-  width: 100%;
-  max-width: 820px; /* screenshot 大約是 820px */
-  padding: 0 24px; /* 小螢幕左右保留 */
+.feedback-form {
+  /* 沿用 profile-form 的縱向排版、這裡可以再微調 */
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-/* Top bar */
-.top-bar {
-  display: flex;
-  align-items: center;
+.feedback-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  margin-bottom: 14px;
 }
 
-.top-bar h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-/* Back 按鈕 */
-.back-btn {
-  background: transparent;
-  border: none;
-  color: #3c5267;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-
-/* 外層卡片 */
-.card {
-  width: 100%;
-  max-width: 760px;
-  background: #ffffff;
-  padding: 32px 40px;
-  border-radius: 18px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+.feedback-grid-top-margin {
   margin-top: 10px;
 }
 
-
-
-
-
-
-/* Labels */
-label {
-  display: block;
+/* Top labels */
+.feedback-label {
   font-size: 15px;
+  font-weight: 700;
+  margin: 8px 0 10px;
+  color: #2f4d71;
+  letter-spacing: 0.1px;
+}
+
+.feedback-question {
+  display: block;
+  margin: 8px 0 10px;
+  font-size: 14px;
   font-weight: 600;
-  margin-top: 20px;
-  margin-bottom: 8px;
-  color: #445b6b;
+  color: #435b73;
+  letter-spacing: 0.02em;
 }
 
-/* 單行輸入框 */
-input[type="text"],
-.card input {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid #d6dfe3;
-  background: #f1f5f7;
-  font-size: 14px;
+.form-icon {
+  width: 18px;
+  height: 18px;
+  color: #355d7f;
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
-/* Textarea */
-textarea {
-  width: 100%;
-  height: 80px;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1px solid #d6dfe3;
-  background: #f1f5f7;
-  resize: none;
-  font-size: 14px;
+.small-label {
+  font-size: 13px;
+  color: #6e7b8d;
+  margin-bottom: 4px;
 }
 
-/* 三顆按鈕的 row */
-.btn-row {
+/* Info blocks (AQI / temperature) – 貼近 profile card 風格 */
+.info-card {
+  padding: 16px 18px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #d5deee;
+  box-shadow: 0 8px 18px rgba(17, 38, 146, 0.08);
+}
+
+.info-card-top-row {
   display: flex;
-  gap: 14px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-card-main-value {
+  font-size: 26px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.info-card-temp-values {
   margin-top: 6px;
 }
 
-/* 三顆選項按鈕 */
-.btn-row button {
-  flex: 1;
-  padding: 14px 10px;
-  background: #eef4f7;
-  border-radius: 14px;
-  border: 1px solid #d3dee3;
-  cursor: pointer;
-  font-size: 14px;
-  color: #3a5465;
-  transition: 0.2s;
-}
-
-.btn-row button:hover {
-  background: #dce8f1;
-}
-
-/* Range slider */
-input[type="range"] {
+/* Inputs */
+.feedback-select,
+.feedback-input {
   width: 100%;
-  margin-top: 10px;
-}
-
-/* Submit button */
-.submit-btn {
-  width: 100%;
-  margin-top: 25px;
-  padding: 14px;
-  background: #345c7d;
-  color: white;
-  border: none;
+  padding: 10px 12px;
   border-radius: 12px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 14px;
+  box-sizing: border-box;
+  color: #1f2a44;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
+  box-shadow: 0 6px 14px rgba(17, 38, 146, 0.06);
 }
 
-.submit-btn:hover {
-  background: #294a64;
+.feedback-select:focus,
+.feedback-input:focus {
+  border-color: rgba(74, 128, 196, 0.7);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(74, 128, 196, 0.16);
 }
 
-/* Status text */
-.card > div:last-child {
-  margin-top: 10px;
-  text-align: center;
-  color: #54707f;
-}
-/* ===== Allergy symptoms toggle group ===== */
-
-.symptom-toggle-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* single toggle button */
-.symptom-toggle {
+/* 統一的 pill 按鈕基底（跟 profile btn-ghost / btn-save-profile 同一系統） */
+.pill-button {
+  padding: 10px 14px;
   border-radius: 999px;
-  border: 1px solid #d0dde2;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  background: #f7fafb;
-  color: #3c5267;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #1f2a44;
+  font-size: 14px;
   cursor: pointer;
-  outline: none;
-  min-width: 0;
-  white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease,
-    box-shadow 0.15s ease, transform 0.05s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.1s ease, border-color 0.15s ease;
+  box-shadow: 0 4px 12px rgba(15, 33, 98, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.symptom-toggle:hover {
-  background: #e7f1f4;
-  border-color: #9bb4c3;
-}
-
-.symptom-toggle.selected {
-  background: #4b7f67;          /* BreezyDay 主綠 */
-  border-color: #4b7f67;
-  color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(75, 127, 103, 0.25);
+.pill-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 18px rgba(15, 33, 98, 0.16);
   transform: translateY(-1px);
 }
 
-.symptom-toggle:active {
-  transform: translateY(0);
-  box-shadow: none;
+.pill-button.active {
+  background: linear-gradient(135deg, #6ea7d8, #4f82c2);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(79, 130, 194, 0.28);
+  transform: translateY(-1px);
+}
+
+/* 選項列（溫度 / allergy / 藥物） */
+.choice-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.choice-row .flex-fill {
+  flex: 1 1 0;
+}
+
+/* Symptom pills – 讓它視覺上也接近同一套按鈕 */
+.symptom-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.symptom-toggle {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #d5deee;
+  font-size: 13px;
+  color: #1f2a44;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(17, 38, 146, 0.08);
+}
+
+.symptom-toggle:hover {
+  background: #f7faff;
+  transform: translateY(-1px);
+}
+
+.symptom-toggle.selected {
+  background: linear-gradient(135deg, #6ea7d8, #4f82c2);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 10px 22px rgba(79, 130, 194, 0.28);
+}
+
+/* Submit 區塊排版：沿用 profile-actions，再微調 */
+.submit-row {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Profile 風格藍色按鈕（覆蓋 btn-save-profile 顏色，統一 Feedback 送出鍵） */
+.submit-btn {
+  background: rgba(255, 255, 255, 0.22);
+  color: #1f2a44;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 12px rgba(15, 33, 98, 0.12);
+}
+
+.submit-btn:hover {
+  background: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 6px 18px rgba(15, 33, 98, 0.16);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(15, 33, 98, 0.12);
+}
+
+.feedback-status {
+  font-size: 13px;
+}
+
+.feedback-status-ok {
+  color: #3d8459;
+}
+
+.feedback-status-error {
+  color: #b64242;
+}
+
+/* ===== Slider block  ===== */
+
+.slider-block {
+  margin-top: 4px;
+}
+
+.slider-card {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(206, 216, 232, 0.9);
+  box-shadow: 0 10px 22px rgba(15, 33, 98, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.slider-track {
+  flex: 1;
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background: #ccd6e6;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider-track::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #3a5a80; /* profile navy */
+  box-shadow: 0 2px 8px rgba(17, 38, 146, 0.25);
+  margin-top: -8px;
+}
+
+.slider-track::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #3a5a80;
+  box-shadow: 0 2px 8px rgba(17, 38, 146, 0.25);
+}
+
+.slider-track::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #ccd6e6;
+}
+
+.slider-value-pill {
+  min-width: 40px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #d0dde2;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  color: #355d7f;
+}
+
+/* 手機調整 */
+@media (max-width: 640px) {
+  .feedback-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .submit-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* Header (aligned with Feedback History) */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.top-title {
+  margin: 0;
+  color: #2f4d71;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.top-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6e7b8d;
 }

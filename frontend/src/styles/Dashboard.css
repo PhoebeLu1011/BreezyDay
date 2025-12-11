@@ -1,12 +1,13 @@
 /* 整個頁面背景（和 Landing 的藍色系一致） */
 .dashboard-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #c7d8f0, #b7d1eb);
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding: 32px 16px;
 }
+
 
 /* 中央白色大卡片 */
 .dashboard-shell {
@@ -32,7 +33,7 @@
   align-items: center;
   gap: 6px;
   font-weight: 600;
-  color: #5a7da1;
+  color: #2f4d71; /* match AQI main title */
 }
 
 .dashboard-icon {
@@ -120,7 +121,9 @@
 }
 
 .info-card-icon {
-  font-size: 1rem;
+  width: 20px;
+  height: 20px;
+  color: #355d7f;
 }
 
 .info-card-main {
@@ -160,29 +163,35 @@
 .outfit-header {
   display: flex;
   align-items: center;
+  justify-content: space-between; 
   gap: 14px;
   margin-bottom: 12px;
 }
 
 .outfit-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
-  background: #e0e7f6;
+  background: #e6edf8;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
+  position: relative;
 }
 
 .outfit-title {
   font-weight: 600;
   color: #425d80;
+  display: flex;
+  align-items: center;
 }
 
 .outfit-subtitle {
   font-size: 0.85rem;
   color: #8194ad;
+  display: flex;
+  align-items: center;
 }
 
 /* outfit 中間：小人 + tags */
@@ -213,29 +222,81 @@
   width: 40px;
   height: 36px;
   border-radius: 22px 22px 18px 18px;
-  background: #d49a63;
+  background: #f1c1a5;
   position: relative;
+  margin-bottom: 0;
+}
+.avatar-eye {
+  position: absolute;
+  top: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2f2f2f;
+}
+.avatar-eye.left { left: 10px; }
+.avatar-eye.right { right: 10px; }
+.avatar-smile {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  width: 14px;
+  height: 6px;
+  border: 2px solid #2f2f2f;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  transform: translateX(-50%);
 }
 
 .avatar-body {
-  width: 46px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   background: #f6c65c;
-  margin-top: 4px;
+  margin-top: 0;
+  position: relative;
+}
+.avatar-arm {
+  position: absolute;
+  top: 8px;
+  width: 10px;
+  height: 26px;
+  background: #f6c65c;
+  border-radius: 12px;
+}
+.avatar-arm.left {
+  left: -7px;
+  transform: rotate(8deg);
+}
+.avatar-arm.right {
+  right: -7px;
+  transform: rotate(-8deg);
 }
 
 .avatar-legs {
   width: 30px;
-  height: 40px;
+  height: 30px;
   border-radius: 12px;
   background: #8ba7bf;
-  margin-top: 4px;
+  margin-top: -2px;
+  position: relative;
 }
+.avatar-foot {
+  position: absolute;
+  bottom: -1px;
+  width: 12px;
+  height: 6px;
+  border-radius: 6px;
+  background: #6b829a;
+}
+.avatar-foot.left { left: 2px; }
+.avatar-foot.right { right: 2px; }
 
 .outfit-tags {
   flex: 1;
 }
+
+
 
 .tag-pill {
   display: inline-flex;
@@ -260,7 +321,9 @@
 }
 
 .sparkle {
-  font-size: 0.9rem;
+  width: 16px;
+  height: 16px;
+  color: #7faed8;
 }
 
 .outfit-footer {
@@ -272,6 +335,7 @@
 /* Important Notes 區塊 */
 .notes-card {
   margin-top: 10px;
+  margin-bottom: 18px;
   background: #fff7d9;
   border-radius: 20px;
   padding: 16px 18px 14px;
@@ -281,12 +345,21 @@
 .notes-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 6px;
 }
 
+.notes-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .notes-icon {
-  font-size: 1.1rem;
+  width: 18px;
+  height: 18px;
+  color: #d4a322; /* slightly deeper yellow for visibility */
 }
 
 .notes-title {
@@ -310,7 +383,7 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .badge-neutral {
-  background: #e5e7eb; /* 灰 */
+  background: #eaebe5; /* 灰 */
   color: #374151;
 }
 
@@ -354,5 +427,36 @@
 .badge-risk-unknown {
   background-color: rgba(158, 158, 158, 0.8); /* #9e9e9e */
   color: #fff;
+}
+
+/* AQI badge colors */
+.badge-aqi-good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-aqi-moderate {
+  background: #e1bb24;
+  color: #92400e;
+}
+
+.badge-aqi-usg {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.badge-aqi-unhealthy {
+  background: #fecdd3;
+  color: #9b1c1c;
+}
+
+.badge-aqi-very {
+  background: #e9d5ff;
+  color: #6b21a8;
+}
+
+.badge-aqi-hazard {
+  background: #1f2937;
+  color: #f9fafb;
 }
 

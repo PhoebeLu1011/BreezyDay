@@ -1,109 +1,88 @@
-/* ================================
-   整體外框
-================================ */
+/* =============== Page Layout =============== */
 
-.feedback-history-container {
-  min-height: calc(100vh - 70px);
+.feedback-history-page {
+  min-height: 100vh;
   padding: 32px 16px 40px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: radial-gradient(
-    circle at top left,
-    #e5f3ff 0,
-    #f1f7f4 35%,
-    #e6f5ff 70%,
-    #dde9ea 100%
-  );
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #1f2933;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Noto Sans TC", sans-serif;
 }
 
-/* ================================
-   Top Bar
-================================ */
+.feedback-history-container {
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* =============== Top Bar & Summary =============== */
 
 .history-topbar {
-  width: 100%;
-  max-width: 1120px;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  justify-content: center;
+  margin-bottom: 18px;
 }
 
-.history-topbar h2 {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #16364d;
+.history-title-block {
+  text-align: center;
 }
 
-.back-btn {
-  border: none;
-  background: transparent;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  color: #40687e;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+.history-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #2f4d71;
 }
 
-.back-btn:hover {
-  background: rgba(64, 104, 126, 0.08);
-  transform: translateX(-1px);
+.history-subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #6e7b8d;
 }
-
-/* ================================
-   Summary Cards
-================================ */
 
 .summary-row {
-  width: 100%;
-  max-width: 1120px;
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 14px;
   margin-bottom: 20px;
 }
 
 .summary-card {
-  flex: 1 1 240px;
-  background: #ffffffd9;
+  flex: 1 1 200px;
+  background: #f8fbff;
   border-radius: 18px;
-  padding: 18px 20px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  padding: 14px 16px;
+  border: 1px solid rgba(220, 230, 244, 0.95);
+  box-shadow: 0 10px 24px rgba(15, 35, 72, 0.12);
 }
 
 .summary-title {
-  font-size: 0.8rem;
+  font-size: 12px;
   font-weight: 500;
   color: #6b7b8c;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .summary-value {
-  font-size: 1.45rem;
+  font-size: 22px;
   font-weight: 700;
-  color: #172b4d;
+  color: #1b053f;
 }
 
-/* ================================
-   History List Wrapper
-================================ */
+/* =============== History List Shell =============== */
 
 .history-list {
-  width: 100%;
-  max-width: 1120px;
-  background: rgba(255, 255, 255, 0.95);
+  background: #f8fbff;
   border-radius: 22px;
-  padding: 20px 22px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-  min-height: 260px;
+  padding: 18px 20px;
+  border: 1px solid rgba(220, 230, 244, 0.95);
+  box-shadow: 0 14px 34px rgba(15, 35, 72, 0.14);
+  min-height: 220px;
 }
 
 .empty-msg {
-  height: 220px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,79 +90,87 @@
   font-size: 0.95rem;
 }
 
-/* ================================
-   Horizontal Scroll Section
-================================ */
-
 .history-scroller {
   overflow-x: auto;
   padding-bottom: 6px;
 }
 
-/* ================================
-   Header Row
-================================ */
+/* =============== Row Wrapper (transparent)=============== */
 
-.history-header-row {
-  display: flex;
+.history-row-wrapper {
+  margin-top: 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.history-row-wrapper:hover {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+/* =============== Header & Row (Grid) =============== */
+
+.history-header-row,
+.history-row {
+  display: grid;
+  grid-template-columns:
+    140px   /* Date */
+    160px   /* Location / AQI */
+    160px   /* Temp (High / Low / Δ) */
+    110px   /* Temp Feel */
+    120px   /* Change Outfit */
+    180px   /* Outfit (Top / Bottom) */
+    120px   /* Accessories */
+    120px   /* Shoes */
+    110px   /* Allergy Feel */
+    110px   /* Allergy Impact */
+    110px   /* Allergy Med */
+    200px   /* Symptoms */
+    70px;   /* Rating */
+  column-gap: 12px;
   align-items: center;
-  gap: 14px;
-  min-width: 1300px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(148, 180, 214, 0.45);
+  width: 100%;
+  min-width: 1100px; 
+}
+
+/* Header only */
+.history-header-row {
+  padding-bottom: 8px;
+  border-bottom: none;
 }
 
 .history-header-cell {
-  min-width: 130px;
-  font-size: 0.8rem;
+  font-size: 13px;
   font-weight: 600;
-  color: #6b7b8c;
+  color: #5f7288;
 }
 
-/* ================================
-   Data Rows (整條藍色橫條)
-================================ */
-
-/* 每一列：整條藍色卡片 */
 .history-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  min-width: 1300px;
-
-  margin-top: 14px;
-  padding: 16px 18px;
-
-  border-radius: 18px;
-  background: #f5f9ff;
-  border: 1px solid rgba(148, 180, 214, 0.45);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
-
-  transition: background 0.15s ease, box-shadow 0.2s ease,
-    transform 0.1s ease;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-.history-row:hover {
-  background: #eef6ff;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
-  transform: translateY(-1px);
-}
+/* =============== Cell styles =============== */
 
-/* 每一欄寬度設定 */
 .history-cell {
-  min-width: 130px;
-  max-width: 200px;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   color: #243b53;
 }
 
 .history-cell-date {
-  min-width: 150px;
   font-weight: 600;
   color: #20374c;
 }
 
-/* 兩行顯示用 */
+.history-cell-rating {
+  font-weight: 600;
+}
+
+/* 主／副文字 */
 .cell-main {
   font-weight: 600;
   margin-bottom: 2px;
@@ -195,22 +182,41 @@
   color: #8090a0;
 }
 
-/* ================================
-   RWD
-================================ */
+/* Symptoms chips */
+.history-cell.symptoms-cell {
+  max-width: 260px;
+}
+
+.symptom-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.symptom-chip {
+  background: rgba(111, 144, 183, 0.14);
+  color: #2f4d71;
+  border: 1px solid rgba(111, 144, 183, 0.3);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* =============== Responsive =============== */
 
 @media (max-width: 768px) {
-  .history-header-row {
-    min-width: 900px;
+  .feedback-history-container {
+    max-width: 100%;
+  }
+
+  .history-header-row,
+  .history-row {
+    min-width: 900px; 
   }
 
   .history-row {
-    min-width: 900px;
-    padding: 12px 14px;
-  }
-
-  .history-header-cell,
-  .history-cell {
-    min-width: 110px;
+    padding: 10px 12px;
   }
 }

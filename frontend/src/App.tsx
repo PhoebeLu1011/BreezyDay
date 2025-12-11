@@ -8,19 +8,33 @@ import Dashboard from "./pages/Dashboard";
 import AQIPage from "./features/aqi/AQIPage";
 import ProfilePage from "./pages/ProfilePage";
 import FeedbackPage from "./pages/FeedbackPage";
-import FeedbackHistoryPage from "./pages/FeedbackHistoryPage";   
+import FeedbackHistoryPage from "./pages/FeedbackHistoryPage";
 import TopNav from "./components/TopNav";
+import Background from "./components/Background";
 
 type Page =
   | "landing"
   | "auth"
   | "dashboard"
   | "aqi"
+  | "aqiTable"
   | "profile"
   | "feedback"
   | "feedbackHistory";
 
 const STORAGE_KEY = "breezyday_last_page";
+
+// 需要背景的所有頁面（都會套 Vanta）
+const VANTA_PAGES: Page[] = [
+  "landing",
+  "auth",
+  "dashboard",
+  "aqi",
+  "aqiTable",
+  "profile",
+  "feedback",
+  "feedbackHistory",
+];
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -38,9 +52,10 @@ export default function App() {
       if (
         saved === "dashboard" ||
         saved === "aqi" ||
+        saved === "aqiTable" ||
         saved === "profile" ||
         saved === "feedback" ||
-        saved === "feedbackHistory" 
+        saved === "feedbackHistory"
       ) {
         setPage(saved);
       } else {
@@ -73,41 +88,62 @@ export default function App() {
     }
   };
 
-  // ---------- visitor ----------
+  let content;
+
   if (!user) {
     if (page === "auth") {
-      return <AuthPage onAuthSuccess={() => go("dashboard")} />;
+      content = <AuthPage onAuthSuccess={() => go("dashboard")} />;
+    } else {
+      content = <Landing onEnter={() => go("auth")} />;
     }
-    return <Landing onEnter={() => go("auth")} />;
-  }
-
-  // ---------- logged-in ----------
-  return (
-    <>
-      <TopNav onNavigate={go} />
-
-      <div style={{ paddingTop: "70px" }}>
-
+  } else {
+    content = (
+      <>
         {page === "dashboard" && <Dashboard onNavigate={go} />}
 
-        {page === "aqi" && <AQIPage />}
+        {page === "aqi" && (
+          <AQIPage initialMode="dashboard" onNavigate={go} />
+        )}
 
+        {page === "aqiTable" && (
+          <AQIPage initialMode="table" onNavigate={go} />
+        )}
 
         {page === "profile" && (
           <ProfilePage
             onBack={() => go("dashboard")}
-            onViewFeedback={() => go("feedbackHistory")}   
+            onViewFeedback={() => go("feedbackHistory")}
           />
         )}
 
         {page === "feedback" && (
-          <FeedbackPage onBack={() => go("dashboard")} />
+          <FeedbackPage />
         )}
 
-        {page === "feedbackHistory" && (   
+        {page === "feedbackHistory" && (
           <FeedbackHistoryPage onBack={() => go("profile")} />
         )}
+      </>
+    );
+  }
 
+  // ---------- layout ----------
+  return (
+    <>
+      {VANTA_PAGES.includes(page) && <Background />}
+
+      {user && <TopNav onNavigate={go} />}
+
+      <div
+        style={{
+          paddingTop: user ? "70px" : 0,
+          minHeight: "100vh",
+          background: "transparent",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "cover",
+        }}
+      >
+        {content}
       </div>
     </>
   );

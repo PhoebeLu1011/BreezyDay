@@ -1,0 +1,174 @@
+/* src/styles/Landing.css */
+
+/* Landing layout */
+/* src/styles/Landing.css */
+
+/* Landing layout：專屬 Landing 使用 */
+.landing-page-root {
+  width: 100%;
+  min-height: 100vh;         /* 撐滿畫面高度，讓背景露出來 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: transparent;    /* ⭐ 不自己畫背景，讓 Background.tsx 的漸層當底 */
+}
+
+
+.landing-inner {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  padding: 40px 32px 48px;
+  position: relative;         /* 浮在 Vanta 上面 */
+  z-index: 2;                 /* 在雲層之上 */
+}
+
+.landing-title {
+  font-size: clamp(2.6rem, 4vw, 3.4rem);
+  margin: 0;
+  margin-bottom: 4px;
+  color: #f5f7fb;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.landing-underline {
+  width: 72px;
+  height: 3px;
+  margin: 12px auto 4px;
+  border-radius: 999px;
+  background: transparent;
+  opacity: 0.9;
+}
+
+.landing-subtitle {
+  margin-top: 16px;
+  margin-bottom: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #e0e7f1;
+  min-height: 52px;
+  opacity: 0.92;
+}
+
+.landing-btn-primary {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+
+  font-size: 1.05rem;
+  font-weight: 600;
+
+  background: linear-gradient(135deg, #6ea7d8, #4f82c2);
+  color: #f7f9ff;
+
+  box-shadow: 0 14px 30px rgba(55, 96, 142, 0.38);
+  transition:
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out,
+    background 160ms ease-out;
+}
+
+.landing-btn-primary:hover,
+.landing-btn-primary:focus-visible {
+  background: linear-gradient(135deg, #5f9cd2, #466fae);
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 18px 42px rgba(55, 96, 142, 0.5);
+}
+
+.landing-btn-primary:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 8px 22px rgba(55, 96, 142, 0.32);
+}
+
+/* Floating cloud layer */
+.landing-clouds {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;                 /* 雲在 Vanta 上、文字下 */
+}
+
+.cloud {
+  position: absolute;
+  background: #ffffff;
+  opacity: 0.1;
+  filter: blur(14px);
+  border-radius: 50%;
+  box-shadow:
+    40px 12px 40px rgba(255, 255, 255, 0.85),
+    80px 6px 50px rgba(255, 255, 255, 0.7),
+    120px 14px 42px rgba(255, 255, 255, 0.6);
+  animation: drift 28s linear infinite;
+}
+
+.cloud-1 {
+  width: 160px;
+  height: 70px;
+  top: 14%;
+  left: -20%;
+  animation-duration: 32s;
+}
+
+.cloud-2 {
+  width: 190px;
+  height: 80px;
+  top: 36%;
+  left: 110%;
+  animation-duration: 38s;
+  animation-delay: -6s;
+}
+
+.cloud-3 {
+  width: 140px;
+  height: 64px;
+  top: 62%;
+  left: -15%;
+  animation-duration: 30s;
+  animation-delay: -12s;
+}
+
+.cloud-4 {
+  width: 210px;
+  height: 90px;
+  top: 76%;
+  left: 105%;
+  animation-duration: 44s;
+  animation-delay: -18s;
+}
+
+.cloud-5 {
+  width: 170px;
+  height: 74px;
+  top: 8%;
+  left: 120%;
+  animation-duration: 36s;
+  animation-delay: -24s;
+}
+
+@keyframes drift {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-140vw);
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-inner {
+    padding: 28px 20px 32px;
+    border-radius: 20px;
+  }
+
+  .landing-title {
+    font-size: 2.4rem;
+  }
+}

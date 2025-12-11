@@ -1,5 +1,5 @@
 # ai_gemini.py
-from typing import List, Dict
+from typing import List, Dict, Optional
 import textwrap
 import requests
 from requests.exceptions import HTTPError
@@ -109,11 +109,10 @@ def _extract_text_from_gemini_response(resp_json: Dict) -> str:
             texts.append(t)
     return "\n".join(texts).strip()
 
-
-
-def build_outfit_prompt(today_env: Dict) -> str:
+def build_outfit_prompt(feedbacks: List[Dict], today_env: Dict) -> str:
     """
     產生給 Gemini 使用的「穿搭建議」 Prompt。
+    feedbacks: 最近幾次使用者的 feedback（包含穿搭、體感、環境）
     today_env: {
         "tempMin": ...,
         "tempMax": ...,
@@ -129,8 +128,79 @@ def build_outfit_prompt(today_env: Dict) -> str:
     desc = today_env.get("weatherDesc")
     aqi = today_env.get("aqi")
 
+    # ===== 組出「穿搭 + 體感 + 過敏」歷史 =====
+    history_lines = []
+    for fb in feedbacks:
+        date = fb.get("feedbackDate") or fb.get("createdAt")
+
+        top = fb.get("outfitTop")
+        bottom = fb.get("outfitBottom")
+        shoes = fb.get("outfitShoes")
+        accessories = fb.get("outfitAccessories")
+
+        temp_feel = fb.get("temperatureFeel")          # very_cold / just_right / very_hot
+        change_outfit = fb.get("changeOutfit")         # cooler / same / warmer
+
+        allergy_feel = fb.get("allergyFeel")           # none / normal / severe
+        allergy_impact = fb.get("allergyImpact")
+        rating = fb.get("recommendationRating")
+
+        env_aqi = fb.get("envAqi")
+        env_max = fb.get("envMaxTemp")
+        env_min = fb.get("envMinTemp")
+
+        parts = []
+        if date:
+            parts.append(f"Date: {date}")
+        if env_min is not None and env_max is not None:
+            parts.append(f"T={env_min}~{env_max}°C")
+        if env_aqi is not None:
+            parts.append(f"AQI={env_aqi}")
+
+        outfit_parts = []
+        if top:
+            outfit_parts.append(f"top={top}")
+        if bottom:
+            outfit_parts.append(f"bottom={bottom}")
+        if shoes:
+            outfit_parts.append(f"shoes={shoes}")
+        if accessories:
+            outfit_parts.append(f"accessories={accessories}")
+
+        if outfit_parts:
+            parts.append("outfit: " + ", ".join(outfit_parts))
+
+        if temp_feel:
+            parts.append(f"temperature_feel={temp_feel}")
+        if change_outfit:
+            parts.append(f"change_outfit={change_outfit}")
+        if allergy_feel:
+            parts.append(f"allergy_feel={allergy_feel}")
+        if allergy_impact is not None:
+            parts.append(f"allergy_impact={allergy_impact}/10")
+        if rating is not None:
+            parts.append(f"recommendation_rating={rating}/5")
+
+        if parts:
+            history_lines.append("- " + "; ".join(parts))
+
+    history_block = "\n".join(history_lines) if history_lines else "No previous outfit feedback records."
+
     prompt = f"""
-    You are an outfit recommendation assistant for a weather dashboard.
+    You are an outfit recommendation assistant for a weather and allergy-aware dashboard.
+
+    You receive:
+    - Today's environment (temperature, rain, AQI, description)
+    - The user's recent outfit and comfort history, including what they wore and how they felt
+      (too hot/too cold/comfortable, whether they wanted warmer/cooler outfits, allergy impact,
+       and ratings of previous recommendations).
+
+    Your goal:
+    Learn patterns from the history (for example, "user felt too cold with only a thin shirt at 15°C")
+    and use them together with today's environment to suggest a better outfit for today.
+
+    User outfit & comfort history:
+    {history_block}
 
     Today's environment:
     - Min temperature: {t_min} °C
@@ -145,22 +215,32 @@ def build_outfit_prompt(today_env: Dict) -> str:
     Line 2 → ONE outerwear item (e.g., "Light jacket", "No outerwear needed")
     Line 3 → ONE bottomwear item (e.g., "Jeans", "Shorts")
     Line 4 → ONE short note about special considerations
-             (e.g., layering, waterproof gear, wind, sudden temp drop)
+             (e.g., layering, waterproof gear, wind, sudden temperature drop, mask if AQI is bad)
 
     Rules:
     - English only
     - No numbering
     - No additional explanations
     - Each line MUST be exactly one item or one short sentence.
+    - Use the history patterns to avoid repeating outfits that made the user feel too cold or too hot.
+    - If AQI is high and the user had bad allergy impact before, mention protection or more indoor-friendly ideas.
     """
 
     return textwrap.dedent(prompt).strip()
 
 
-def call_gemini(api_key: str, prompt: str, model: str = DEFAULT_GEMINI_MODEL) -> List[str]:
+def call_gemini(
+    api_key: str,
+    prompt: str,
+    model: str = DEFAULT_GEMINI_MODEL,
+    expected_lines: Optional[int] = None,
+) -> List[str]:
     """
     用指定的 api_key 呼叫 Gemini，根據 prompt 取得建議。
     不在這裡 log 或儲存 api_key。
+    expected_lines:
+        - 若為 None：不強制切行數
+        - 若為數字：只回傳前 expected_lines 行
     """
     if not api_key:
         raise ValueError("Missing Gemini API key")
@@ -194,6 +274,9 @@ def call_gemini(api_key: str, prompt: str, model: str = DEFAULT_GEMINI_MODEL) ->
     if not text:
         return []
 
-    #  5 行
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    return lines[:5]
+
+    if expected_lines is not None:
+        return lines[:expected_lines]
+
+    return lines
