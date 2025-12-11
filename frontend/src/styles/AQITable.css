@@ -1,0 +1,186 @@
+/* src/styles/AQITable.css */
+
+/* === AQI Table Layout (no big wrapper card) === */
+
+.aqi-table-section {
+  margin-top: 32px;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Header: title + controls (align with AQIDashboard style) */
+.aqi-table-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.aqi-table-title-block {
+  min-width: 220px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2f4d71;
+  margin: 0 0 4px 0;
+}
+
+.aqi-table-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #6e7b8d;
+}
+
+/* Right-hand controls row */
+.aqi-table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Level filter label + select */
+.aqi-table-filter {
+  font-size: 13px;
+  color: #4d5870;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aqi-table-filter select {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #ccd4e0;
+  background: #ffffff;
+  font-size: 13px;
+  min-width: 150px;
+}
+
+/* Keyword input / sort select */
+.aqi-table-input,
+.aqi-table-select {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #ccd4e0;
+  background: #ffffff;
+  font-size: 13px;
+  min-width: 150px;
+}
+
+/* Buttons reuse city-btn + glass from AQIDashboard; just tweak spacing */
+.aqi-table-btn {
+  padding-inline: 14px;
+  font-size: 13px;
+}
+
+.aqi-table-btn.secondary {
+  opacity: 0.9;
+}
+
+/* Status text below header */
+.aqi-table-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #4a5a72;
+}
+
+/* === Main table card (only the table is card-like) === */
+
+.aqi-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(17, 38, 146, 0.08);
+}
+
+.aqi-table th,
+.aqi-table td {
+  padding: 11px 12px;
+  text-align: left;
+  border-bottom: 1px solid #edf1f7;
+  font-size: 14px;
+  color: #1f2a44;
+}
+
+.aqi-table th {
+  background: #e7eef8;
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.aqi-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.aqi-table tr:hover {
+  background: #f5f8ff;
+}
+
+/* Clickable row */
+.aqi-table tbody tr {
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+/* AQI pill style – matches dashboard chips */
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 42px;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* You can map these in your aqiClass() helper */
+.pill.good {
+  background: #3cb371;
+}
+.pill.moderate {
+  background: #f5a623;
+}
+.pill.usg {
+  background: #f08b2d;
+}
+.pill.unhealthy {
+  background: #e94f37;
+}
+.pill.very {
+  background: #a020f0;
+}
+.pill.hazardous {
+  background: #5b1a7a;
+}
+
+/* === Responsive tweaks === */
+@media (max-width: 768px) {
+  .aqi-table-section {
+    padding-inline: 12px;
+  }
+
+  .aqi-table-header {
+    align-items: flex-start;
+  }
+
+  .aqi-table-controls {
+    justify-content: flex-start;
+  }
+
+  .aqi-table th,
+  .aqi-table td {
+    padding: 8px 8px;
+    font-size: 13px;
+  }
+}

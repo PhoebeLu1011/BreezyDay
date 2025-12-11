@@ -7,7 +7,7 @@ body {
   margin: 0;
 }
 
-/* 全畫面背景跟你截圖類似 */
+/* 漸層背景 */
 .bg-landing {
   min-height: 100vh;
   width: 100%;
@@ -17,12 +17,19 @@ body {
   align-items: center;
 }
 
-/* 半透明卡片 */
+/* 透明玻璃卡 */
 .card-glass {
-  background: rgba(255, 255, 255, 0.86);
+  background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.82),
+      rgba(255, 255, 255, 0.72)
+    );
   border-radius: 20px;
   padding: 32px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 14px 38px rgba(84, 116, 152, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 /* 共用 button 風格 */
@@ -70,4 +77,18 @@ body {
   cursor: pointer;
   text-decoration: underline;
   font-size: 0.9rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 覆蓋 Vite 預設 max-width & padding 設定 */
+#root {
+  max-width: none;
+  width: 100%;
 }

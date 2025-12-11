@@ -1,7 +1,9 @@
 // src/features/aqi/AQIDashboard.tsx
 import { useState } from "react";
 import type { StationRow } from "./aqiTypes";
-import { getAqiInfo } from "./aqiUtils";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { TableCellsIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
+import {MapPinIcon} from "@heroicons/react/24/outline";
 
 interface Props {
   locationText: string;
@@ -24,14 +26,25 @@ const AQIDashboard: React.FC<Props> = ({
   aqiClassName,
   barPercent,
   onCurrentLocation,
-  onAddCity,
-  watchedStations,
-  onClickWatched,
-  onRemoveWatched,
-  onGoTable, 
-
+  onGoTable,
 }) => {
   const [scaleOpen, setScaleOpen] = useState(false);
+
+  const levelPalette: Record<
+    string,
+    { box: string; boxText: string; bar: string }
+  > = {
+    "level-good": { box: "#4b925f", boxText: "#ffffff", bar: "#4b925f" },
+    "level-moderate": { box: "#f5a623", boxText: "#ffffff", bar: "#f5a623" },
+    "level-usg": { box: "#d67327", boxText: "#ffffff", bar: "#d67327" },
+    "level-unhealthy": { box: "#d6453a", boxText: "#ffffff", bar: "#d6453a" },
+    "level-very": { box: "#a1266b", boxText: "#ffffff", bar: "#a1266b" },
+    "level-hazardous": { box: "#7b0022", boxText: "#ffffff", bar: "#7b0022" },
+  };
+
+  const palette =
+    (aqiInfo?.className && levelPalette[aqiInfo.className]) ||
+    { box: "#f4a521", boxText: "#ffffff", bar: "#f2b544" };
 
   return (
     <>
@@ -39,25 +52,20 @@ const AQIDashboard: React.FC<Props> = ({
       <p className="sub-title">Real-time Air Quality Index (AQI) Monitoring</p>
 
       <div className="city-controls">
-        <button
-          id="btn-current-location"
-          className="btn btn-primary"
-          onClick={onCurrentLocation}
-        >
-          Current Location
+
+        <button className="city-btn glass" onClick={onCurrentLocation}>
+          <ArrowPathIcon width={18} height={18} />
+          Refresh
         </button>
-        <button
-          id="btn-add-city"
-          className="btn btn-secondary"
-          onClick={onAddCity}
-        >
-          ＋ Add City
+
+        <button className="city-btn glass" onClick={onGoTable}>
+          <TableCellsIcon width={18} height={18} />
+          AQI Table
         </button>
-        <div id="selected-city-tag" className="city-tag">
-          <span>📍</span>
-          <span id="selected-city-text">{locationText || "尚未選擇測站"}</span>
-        </div>
+
       </div>
+
+
 
       <div className="aqi-main-card">
         <div className="aqi-header">
@@ -70,12 +78,16 @@ const AQIDashboard: React.FC<Props> = ({
 
         <div className="aqi-main-body">
           <div className="main-location">
-            <span>📍</span>
-            <span id="main-location-text">{locationText || "載入中..."}</span>
+            <MapPinIcon className="aqi-pin-icon" aria-hidden="true" />
+            <span id="main-location-text">{locationText || "Loading..."}</span>
           </div>
 
           <div className="aqi-main-row">
-            <div className="aqi-box" id="main-aqi-box">
+            <div
+              className="aqi-box"
+              id="main-aqi-box"
+              style={{ background: palette.box, color: palette.boxText }}
+            >
               <span className="aqi-box-label">AQI</span>
               <span className="aqi-box-value" id="main-aqi-value">
                 {aqiValue}
@@ -95,7 +107,10 @@ const AQIDashboard: React.FC<Props> = ({
               <div
                 className="bar-fill"
                 id="main-aqi-bar"
-                style={{ width: `${barPercent}%` }}
+                style={{
+                  width: `${barPercent}%`,
+                  background: palette.bar,
+                }}
               />
             </div>
             <div className="bar-scale">
@@ -107,14 +122,18 @@ const AQIDashboard: React.FC<Props> = ({
       </div>
 
       {/* Toggle Button + AQI Scale */}
-      <button
-        id="aqi-toggle-btn"
-        className="aqi-toggle-btn"
-        onClick={() => setScaleOpen((prev) => !prev)}
-      >
-        {scaleOpen ? "收起 AQI 等級 ▲" : "顯示 AQI 等級 ▼"}
-      </button>
-
+      <div className="aqi-scale-toggle-wrapper">
+        <button
+          className="aqi-toggle-transparent"
+          onClick={() => setScaleOpen((prev) => !prev)}
+        >
+          {scaleOpen ? (
+            <ChevronUpIcon width={22} height={22} />
+          ) : (
+            <ChevronDownIcon width={22} height={22} />
+          )}
+        </button>
+      </div> 
       <div
         id="aqi-scale-container"
         className={`aqi-scale-container ${scaleOpen ? "open" : ""}`}
@@ -155,46 +174,6 @@ const AQIDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 多城市卡片 */}
-      <div id="city-cards" className="city-cards">
-        {watchedStations.map((s, idx) => {
-          const info = getAqiInfo(s.aqi);
-          return (
-            <div
-              key={`${s.county}-${s.site}-${idx}`}
-              className="city-card"
-              onClick={() => onClickWatched(s)}
-            >
-              <button
-                className="city-card-remove"
-                title="移除"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveWatched(idx);
-                }}
-              >
-                ✕
-              </button>
-              <div className="city-card-title">
-                {s.county} {s.site}
-              </div>
-              <div>{s.status || ""}</div>
-              <div className="city-card-aqi">
-                <span className="city-card-aqi-value">{s.aqi || "--"}</span>
-                <span className="city-card-aqi-label">{info.label}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="aqi-bottom-actions" style={{ marginTop: "32px", textAlign: "center" }}>
-        <button
-          className="btn btn-outline-primary"
-          onClick={onGoTable}
-        >
-          查看全台測站列表（AQI Table）
-        </button>
-      </div>
     </>
   );
 };

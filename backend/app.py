@@ -18,10 +18,17 @@ from requests.exceptions import HTTPError
 load_dotenv()
 
 app = Flask(__name__)
-# CORS 設定
+
+# ===== CORS 設定（本機 + 部署）=====
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+
 CORS(
     app,
-    resources={r"/api/*": {"origins": "http://localhost:5173"}},
+    resources={
+        r"/api/*": {
+            "origins": [frontend_origin, "http://localhost:5173"]
+        }
+    },
     supports_credentials=True,
 )
 
@@ -39,6 +46,8 @@ jwt = JWTManager(app)
 mongo_client = MongoClient(os.getenv("MONGO_URI"))
 db = mongo_client["BreezyDay"]
 users_col = db["users"]
+feedback_col = db["feedback"]
+ai_suggestions_col = db["ai_suggestions"]
 
 # 確保 email unique
 try:
@@ -191,8 +200,7 @@ def update_profile():
     return jsonify({"message": "profile updated"})
 
 
-# ===== Feedback Collection =====
-feedback_col = db["feedback"]
+
 
 @app.post("/api/feedback")
 @jwt_required()
@@ -240,9 +248,13 @@ def submit_feedback():
     feedback_col.insert_one(doc)
 
     return jsonify({"message": "feedback saved"})
-
+def get_today_str_taipei() -> str:
+    """回傳台灣時區的今天日期字串，如 2025-12-11"""
+    tz = timezone(timedelta(hours=8))
+    return datetime.now(tz).strftime("%Y-%m-%d")
 
 @app.route("/api/weather/today-range", methods=["GET"])
+
 def get_today_temp_range():
     """
     使用 CWA F-C0032-001 抓指定縣市「今天」的：
@@ -369,7 +381,7 @@ def get_all_feedback():
 
 @app.route("/api/ai/allergy-tips", methods=["POST", "OPTIONS"])
 @cross_origin(
-    origins="http://localhost:5173",
+    origins=[frontend_origin, "http://localhost:5173"],
     supports_credentials=True
 )
 @jwt_required()
@@ -380,6 +392,12 @@ def get_allergy_tips():
     body = request.get_json() or {}
 
     api_key = body.get("geminiApiKey") or body.get("apiKey")
+    if not api_key:
+        return jsonify({
+            "success": False,
+            "error": "Missing Gemini API key"
+        }), 400
+
     env = body.get("env") or {}
     today_env = {
         "aqi": env.get("aqi"),
@@ -387,14 +405,64 @@ def get_allergy_tips():
         "tempMax": env.get("tempMax"),
     }
 
+    # 是否是使用者按 Refresh
+    force_refresh = bool(body.get("forceRefresh"))
+    today_str = get_today_str_taipei()
+    max_calls_per_day = 2  # ✅ 每個 user 每天最多打 2 次（1 自動 + 1 refresh）
+
+    cache_filter = {
+        "userId": oid,
+        "type": "allergy",
+        "date": today_str,
+    }
+    cache_doc = ai_suggestions_col.find_one(cache_filter)
+
+    # 1) 有 cache 且不是強制 refresh → 直接回傳 cache，不打 Gemini
+    if cache_doc and not force_refresh:
+        tips = (cache_doc.get("result") or {}).get("tips") or []
+        return jsonify({
+            "success": True,
+            "tips": tips,
+            "fromCache": True,
+        })
+
+    calls_today = cache_doc.get("callsToday", 0) if cache_doc else 0
+
+    # 2) 有 cache 且是 refresh，但已達每天上限 → 回 cache，並告訴前端已達上限
+    if cache_doc and force_refresh and calls_today >= max_calls_per_day:
+        tips = (cache_doc.get("result") or {}).get("tips") or []
+        return jsonify({
+            "success": True,
+            "tips": tips,
+            "fromCache": True,
+            "refreshLimitReached": True,
+        })
+
+    # 3) 真的要打 Gemini：先抓最近 10 筆 feedback
     cursor = feedback_col.find({"userId": oid}).sort("createdAt", -1).limit(10)
     feedbacks = list(cursor)
 
     prompt = build_allergy_prompt(feedbacks, today_env)
 
     try:
-        tips = call_gemini(api_key, prompt)
+        tips = call_gemini(api_key, prompt, expected_lines=5)
+
+        # 更新 / 建立 cache
+        ai_suggestions_col.update_one(
+            cache_filter,
+            {
+                "$set": {
+                    "result": {"tips": tips},
+                    "generatedAt": datetime.utcnow(),
+                },
+                "$setOnInsert": cache_filter,
+                "$inc": {"callsToday": 1},
+            },
+            upsert=True,
+        )
+
         return jsonify({"success": True, "tips": tips})
+
     except HTTPError as e:
         resp = e.response
         status = resp.status_code if resp is not None else 500
@@ -413,17 +481,26 @@ def get_allergy_tips():
             "detail": str(e),
         }), 500
 
-# ========== AI Outfit Suggestion ==========
 
+# ========== AI Outfit Suggestion ==========
 @app.route("/api/ai/outfit", methods=["POST", "OPTIONS"])
 @cross_origin(
-    origins="http://localhost:5173",
+    origins=[frontend_origin, "http://localhost:5173"],
     supports_credentials=True
 )
 @jwt_required()
 def get_outfit_suggestion():
+    user_id = get_jwt_identity()
+    oid = ObjectId(user_id)
+
     body = request.get_json() or {}
     api_key = body.get("geminiApiKey")
+    if not api_key:
+        return jsonify({
+            "success": False,
+            "error": "Missing Gemini API key"
+        }), 400
+
     env = body.get("env") or {}
 
     today_env = {
@@ -434,25 +511,97 @@ def get_outfit_suggestion():
         "aqi": env.get("aqi"),
     }
 
-    prompt = build_outfit_prompt(today_env)
+    force_refresh = bool(body.get("forceRefresh"))
+    today_str = get_today_str_taipei()
+    max_calls_per_day = 2  # 一天最多兩次（1 自動 + 1 refresh）
 
-    try:
-        lines = call_gemini(api_key, prompt)
+    cache_filter = {
+        "userId": oid,
+        "type": "outfit",
+        "date": today_str,
+    }
+    cache_doc = ai_suggestions_col.find_one(cache_filter)
 
+    # 1) 有 cache 且不是強制 refresh → 直接回傳 cache
+    if cache_doc and not force_refresh:
+        result = cache_doc.get("result") or {}
         return jsonify({
             "success": True,
+            "top": result.get("top", ""),
+            "outer": result.get("outer", ""),
+            "bottom": result.get("bottom", ""),
+            "note": result.get("note", ""),
+            "fromCache": True,
+        })
+
+    calls_today = cache_doc.get("callsToday", 0) if cache_doc else 0
+
+    # 2) 有 cache 且是 refresh，但已達上限 → 回 cache，不再打 Gemini
+    if cache_doc and force_refresh and calls_today >= max_calls_per_day:
+        result = cache_doc.get("result") or {}
+        return jsonify({
+            "success": True,
+            "top": result.get("top", ""),
+            "outer": result.get("outer", ""),
+            "bottom": result.get("bottom", ""),
+            "note": result.get("note", ""),
+            "fromCache": True,
+            "refreshLimitReached": True,
+        })
+
+    # 3) 真的要打 Gemini：先抓最近 10 筆 feedback
+    cursor = feedback_col.find({"userId": oid}).sort("createdAt", -1).limit(10)
+    feedbacks = list(cursor)
+
+    prompt = build_outfit_prompt(feedbacks, today_env)
+
+    try:
+        # 穿搭：預期 4 行
+        lines = call_gemini(api_key, prompt, expected_lines=4)
+
+        result = {
             "top":    lines[0] if len(lines) > 0 else "",
             "outer":  lines[1] if len(lines) > 1 else "",
             "bottom": lines[2] if len(lines) > 2 else "",
             "note":   lines[3] if len(lines) > 3 else "",
+        }
+
+        # 更新 / 建立 cache
+        ai_suggestions_col.update_one(
+            cache_filter,
+            {
+                "$set": {
+                    "result": result,
+                    "generatedAt": datetime.utcnow(),
+                },
+                "$setOnInsert": cache_filter,
+                "$inc": {"callsToday": 1},
+            },
+            upsert=True,
+        )
+
+        return jsonify({
+            "success": True,
+            **result,
         })
 
+    except HTTPError as e:
+        resp = e.response
+        status = resp.status_code if resp is not None else 500
+        body_text = resp.text if resp is not None else ""
+        print("Gemini outfit HTTP error:", status, body_text[:800])
+        return jsonify({
+            "success": False,
+            "error": f"Gemini HTTP error {status}",
+            "detail": body_text,
+        }), status
     except Exception as e:
-        print("Gemini outfit error:", repr(e))
+        print("Gemini outfit error (other):", repr(e))
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
+
 
 
 # ========== Health Check ==========
@@ -462,6 +611,9 @@ def health_check():
     """健康檢查端點"""
     return jsonify({"status": "ok"})
 
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

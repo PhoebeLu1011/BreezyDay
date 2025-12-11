@@ -1,6 +1,8 @@
-import {  useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import type { FormEvent } from "react";
+import "../styles/Landing.css";
+import "../styles/AuthPage.css";
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -33,33 +35,34 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
   }
 
   return (
-    <div className="bg-landing">
-      <div className="card-glass" style={{ width: 380, maxWidth: "90%" }}>
-        <h2
-          style={{
-            textAlign: "center",
-            marginTop: 0,
-            marginBottom: 4,
-            color: "#355d7f",
-          }}
+    <div className="landing-page-root">
+      <div className="landing-clouds" aria-hidden="true">
+        <span className="cloud cloud-1" />
+        <span className="cloud cloud-2" />
+        <span className="cloud cloud-3" />
+        <span className="cloud cloud-4" />
+        <span className="cloud cloud-5" />
+      </div>
+
+      <div className="card-glass auth-card">
+        <button
+          type="button"
+          className="auth-back-btn"
+          onClick={onAuthSuccess}
         >
-          BreezyDay
-        </h2>
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: 0,
-            marginBottom: 20,
-            color: "#617c94",
-          }}
-        >
+          ←
+        </button>
+
+        <h2 className="auth-title">BreezyDay</h2>
+
+        <p className="auth-subtitle">
           {mode === "login"
             ? "登入以使用個人化天氣與穿搭建議"
             : "建立帳號，開始記錄你的每一天"}
         </p>
 
         <form onSubmit={handleSubmit}>
-          <label style={{ display: "block", fontSize: 14, marginBottom: 10 }}>
+          <label className="auth-label">
             Email
             <input
               className="auth-input"
@@ -70,7 +73,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
             />
           </label>
 
-          <label style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
+          <label className="auth-label">
             密碼
             <input
               className="auth-input"
@@ -81,40 +84,20 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
             />
           </label>
 
-          <p style={{ fontSize: 12, color: "#8a9bb0", marginTop: 2 }}>
-            建議至少 6 碼，包含英數。
-          </p>
+          <p className="auth-hint">建議至少 6 碼，包含英數。</p>
 
-          {error && (
-            <div
-              style={{
-                marginTop: 10,
-                color: "#c53c3c",
-                fontSize: 13,
-              }}
-            >
-              {error}
-            </div>
-          )}
+          {error && <div className="auth-error">{error}</div>}
 
           <button
-            className="btn-primary"
+            className="btn-primary auth-submit-btn"
             type="submit"
             disabled={loading}
-            style={{ width: "100%", marginTop: 18 }}
           >
             {loading ? "送出中..." : mode === "login" ? "登入" : "註冊"}
           </button>
         </form>
 
-        <div
-          style={{
-            marginTop: 16,
-            textAlign: "center",
-            fontSize: 13,
-            color: "#617c94",
-          }}
-        >
+        <div className="auth-toggle-text">
           {mode === "login" ? (
             <>
               還沒有帳號？{" "}

@@ -40,7 +40,7 @@ const PollutantChart: React.FC<Props> = ({ pm25, pm10, o3, so2 }) => {
             { value: Number.isNaN(pm25) ? NaN : pm25, itemStyle: { color: "#e15759" } },
             { value: Number.isNaN(pm10) ? NaN : pm10, itemStyle: { color: "#f28e2c" } },
             { value: Number.isNaN(o3) ? NaN : o3, itemStyle: { color: "#4e79a7" } },
-            { value: Number.isNaN(so2) ? NaN : so2, itemStyle: { color: "#b07aa1" } },
+            { value: Number.isNaN(so2) ? NaN : so2, itemStyle: { color: "#59a14f" } },
           ],
           barWidth: "55%",
           itemStyle: {

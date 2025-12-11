@@ -13,7 +13,6 @@ import {
 } from "./aqiUtils";
 import "./aqi.css";
 
-// ✅ 從這裡開始改：改成打自己的後端，而不是直接打環境部
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 const AQI_API_URL = `${API_BASE_URL}/api/aqi`;
@@ -28,7 +27,6 @@ const AQIPage: React.FC = () => {
   const [statusText, setStatusText] = useState("載入中...");
   const [loading, setLoading] = useState(false);
 
-  // ⭐ 新增：控制是「儀表板模式」還是「表格模式」
   const [viewMode, setViewMode] = useState<"dashboard" | "table">("dashboard");
 
   // 抓 API（打自己的 Flask 後端）
@@ -243,7 +241,6 @@ const AQIPage: React.FC = () => {
               watchedStations={watchedStations}
               onClickWatched={(station) => setCurrentStation(station)}
               onRemoveWatched={handleRemoveWatched}
-              // ⭐ 點這顆按鈕 → 切去 Table 畫面
               onGoTable={() => setViewMode("table")}
             />
 
@@ -266,13 +263,9 @@ const AQIPage: React.FC = () => {
         </>
       ) : (
         <>
-          {/* Table 模式：上面一個「回儀表板」按鈕 + 全螢幕 AQITable */}
           <div style={{ marginBottom: "16px" }}>
-            <button
-              className="btn btn-link"
-              onClick={() => setViewMode("dashboard")}
-            >
-              ← 回 AQI 儀表板
+            <button className="table-back" onClick={() => setViewMode("dashboard")}>
+              ← Back to AQI Dashboard
             </button>
           </div>
 

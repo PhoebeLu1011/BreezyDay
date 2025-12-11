@@ -5,6 +5,13 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/Dashboard.css";
 import { getAqiInfo, findNearestStation } from "../features/aqi/aqiUtils";
 import type { StationRow } from "../features/aqi/aqiTypes";
+import {
+  SparklesIcon,
+  ExclamationTriangleIcon,
+  CloudIcon,
+  SunIcon,
+  LightBulbIcon,
+} from "@heroicons/react/24/outline";
 
 // 跟 App.tsx 相同的 Page 型別
 type Page =
@@ -31,12 +38,15 @@ function mapAqiLabelToClass(label: string | null): string {
   if (!label) return "badge-warning";
 
   const l = label.toLowerCase();
-  if (l.includes("good")) return "badge-aqi-good";
-  if (l.includes("moderate")) return "badge-aqi-moderate";
-  if (l.includes("very unhealthy")) return "badge-aqi-very";
-  if (l.includes("unhealthy for sensitive")) return "badge-aqi-usg";
-  if (l.includes("hazardous")) return "badge-aqi-hazard";
-  if (l.includes("unhealthy")) return "badge-aqi-unhealthy";
+  if (l.includes("good") || l.includes("良好")) return "badge-aqi-good";
+  if (l.includes("moderate") || l.includes("普通")) return "badge-aqi-moderate";
+  if (l.includes("unhealthy for sensitive") || l.includes("對敏感族群不健康"))
+    return "badge-aqi-usg";
+  if (l.includes("unhealthy") || l.includes("對所有族群不健康"))
+    return "badge-aqi-unhealthy";
+  if (l.includes("very unhealthy") || l.includes("非常不健康"))
+    return "badge-aqi-very";
+  if (l.includes("hazardous") || l.includes("危害")) return "badge-aqi-hazard";
 
   // 如果之後你改成中文 label，可以在這裡再加條件
   return "badge-warning";
@@ -121,7 +131,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const loadAiAllergyTips = async (
     aqi: number | null,
     minT: number | null,
-    maxT: number | null
+    maxT: number | null,
+    forceRefresh: boolean = false
   ) => {
     const apiKey = localStorage.getItem("geminiApiKey");
     if (!apiKey) {
@@ -149,6 +160,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             tempMin: minT ?? null,
             tempMax: maxT ?? null,
           },
+          forceRefresh,
         }),
       });
 
@@ -171,7 +183,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     maxT: number | null,
     rain: number | null,
     desc: string,
-    aqi: number | null
+    aqi: number | null,
+    forceRefresh: boolean = false
   ) => {
     const apiKey = localStorage.getItem("geminiApiKey");
     if (!apiKey) {
@@ -199,6 +212,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             weatherDesc: desc,
             aqi,
           },
+          forceRefresh,
         }),
       });
 
@@ -396,11 +410,33 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     loadAiOutfit(
       tempMin,
       tempMax,
-      rainPop,       // 可能是 null，沒關係
-      weatherDesc,   // 一開始是 ""，也沒關係
+      rainPop,       
+      weatherDesc,   
       aqiValue
     );
   }, [aqiValue, tempMin, tempMax]);
+  const handleRefreshAllergy = () => {
+    if (aqiValue === null || tempMin === null || tempMax === null) return;
+    loadAiAllergyTips(aqiValue, tempMin, tempMax, true);
+  };
+
+  const handleRefreshOutfit = () => {
+    if (
+      aqiValue === null ||
+      tempMin === null ||
+      tempMax === null
+    ) {
+      return;
+    }
+    loadAiOutfit(
+      tempMin,
+      tempMax,
+      rainPop,
+      weatherDesc,
+      aqiValue,
+      true
+    );
+  };
 
   return (
     <div className="dashboard-page">
@@ -426,7 +462,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             onClick={() => onNavigate("aqi")}
           >
             <div className="info-card-label">
-              <span className="info-card-icon">💨</span> Air Quality
+              <SparklesIcon className="info-card-icon" aria-hidden="true" />
+              <span>Air Quality</span>
             </div>
             <div className="info-card-main">
               <span className={`badge ${aqiLevelClass}`}>
@@ -438,7 +475,11 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           {/* Allergy Risk */}
           <div className="info-card">
             <div className="info-card-label">
-              <span className="info-card-icon">⚠️</span> Allergy Risk
+              <ExclamationTriangleIcon
+                className="info-card-icon"
+                aria-hidden="true"
+              />
+              <span>Allergy Risk</span>
             </div>
             <div className="info-card-main">
               {(() => {
@@ -464,7 +505,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             className="info-card"
           >
             <div className="info-card-label">
-              <span className="info-card-icon">🌤️</span> Weather Phenomenon
+              <CloudIcon className="info-card-icon" aria-hidden="true" />
+              <span>Weather Phenomenon</span>
             </div>
             <div className="info-card-main">
               {/* 天氣敘述小字放這裡（可選） */}
@@ -481,7 +523,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             className="info-card"
           >
             <div className="info-card-label">
-              <span className="info-card-icon">🌡️</span> Temperature
+              <SunIcon className="info-card-icon" aria-hidden="true" />
+              <span>Temperature</span>
             </div>
             <div className="info-card-main">
               {tempMin !== null && tempMax !== null ? (
@@ -499,10 +542,20 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         {/* Important notes */}
         <section className="notes-card">
           <div className="notes-header">
-            <span className="notes-icon">💡</span>
-            <span className="notes-title">
-              Allergy Advisory for Today
-            </span>
+            <div className="notes-header-left">
+              <LightBulbIcon className="notes-icon" aria-hidden="true" />
+              <span className="notes-title">
+                Allergy Advisory for Today
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="chip-btn chip-btn-outline"
+              onClick={handleRefreshAllergy}
+            >
+              Refresh
+            </button>
           </div>
 
           <ul className="notes-list">
@@ -523,18 +576,38 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         {/* Suggested outfit card */}
         <section className="outfit-card">
           <div className="outfit-header">
-            <div className="outfit-icon">👕</div>
-            <div>
-              <div className="outfit-title">Suggested Outfit</div>
-              <div className="outfit-subtitle">What to wear today</div>
+            <div className="outfit-header-left">
+              <div>
+                <div className="outfit-title">Suggested Outfit</div>
+                <div className="outfit-subtitle">What to wear today</div>
+              </div>
             </div>
+
+            <button
+              type="button"
+              className="chip-btn chip-btn-outline"
+              onClick={handleRefreshOutfit}
+            >
+              Refresh
+            </button>
           </div>
+
 
           <div className="outfit-body">
             <div className="avatar-wrapper">
-              <div className="avatar-head" />
-              <div className="avatar-body" />
-              <div className="avatar-legs" />
+              <div className="avatar-head">
+                <span className="avatar-eye left" />
+                <span className="avatar-eye right" />
+                <span className="avatar-smile" />
+              </div>
+              <div className="avatar-body">
+                <span className="avatar-arm left" />
+                <span className="avatar-arm right" />
+              </div>
+              <div className="avatar-legs">
+                <span className="avatar-foot left" />
+                <span className="avatar-foot right" />
+              </div>
             </div>
 
             <div className="outfit-tags">
@@ -553,11 +626,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               )}
 
 
-              <div className="outfit-note">
-                <span className="sparkle">✨</span>{" "}
-                {aiNote || (localStorage.getItem("geminiApiKey") ? "Loading..." : "Add Gemini API key")}
-
-              </div>
+            <div className="outfit-note">
+              <SparklesIcon className="sparkle" aria-hidden="true" />{" "}
+              {aiNote ||
+                (localStorage.getItem("geminiApiKey")
+                  ? "Loading..."
+                  : "Add Gemini API key")}
+            </div>
             </div>
 
           </div>

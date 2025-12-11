@@ -10,7 +10,7 @@ import { login as apiLogin, register as apiRegister } from "../services/authApi"
 interface AuthCtx {
   user: { email: string } | null;
   token: string | null;
-  loading: boolean;   // ⭐ 新增：判斷 auth 是否還在初始化
+  loading: boolean;   
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);   // ⭐ 新增
+  const [loading, setLoading] = useState(true);   
 
   useEffect(() => {
     const t = localStorage.getItem("token");
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ email });
     }
 
-    setLoading(false);  // ⭐ 初始化完成
+    setLoading(false);  
   }, []);
 
   async function login(email: string, password: string) {

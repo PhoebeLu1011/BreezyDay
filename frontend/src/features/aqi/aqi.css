@@ -22,9 +22,18 @@ body {
     padding: 24px 0 10px 0;
 }
 .main-title {
-    font-size: 32px;
-    margin: 0;
-    font-weight: 700;
+  font-size: 32px;
+  margin: 0;
+  font-weight: 800;
+  color: #2f4d71;
+}
+
+.aqi-pin-icon {
+  width: 16px;
+  height: 16px;
+  color: #4b5c73;
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 .sub-title {
     margin-top: 6px;
@@ -32,7 +41,7 @@ body {
 }
 
 .city-controls {
-    margin-top: 20px;
+    margin-top: 32px;
     display: flex;
     justify-content: center;
     gap: 12px;
@@ -78,6 +87,7 @@ body {
     padding: 24px 24px 20px 24px;
     box-shadow: 0 12px 28px rgba(15, 33, 98, 0.16);
     text-align: left;
+    position: relative;
 }
 .aqi-header {
     display: flex;
@@ -316,46 +326,61 @@ body {
 }
 
 /* === 下方篩選 + 表格 === */
-header {
+/* === 下方卡片 + 表格 === */
+.table-wrapper {
+    margin-top: 28px;
+    background: #f8fbff;
+    border-radius: 18px;
+    padding: 18px 18px 14px;
+    box-shadow: 0 8px 22px rgba(84, 116, 152, 0.16);
+}
+.table-wrapper header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin-top: 32px;
+    margin-bottom: 14px;
 }
-h1 {
+.table-wrapper h1 {
     margin: 0;
-    font-size: 22px;
-    letter-spacing: 0.5px;
+    font-size: 20px;
+    letter-spacing: 0.4px;
+    color: #1f2a44;
 }
 #controls {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    background: #fff;
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.04);
 }
-input,
-select,
-button {
+#controls input,
+#controls select,
+#controls button {
     padding: 8px 10px;
     border: 1px solid #ccd4e0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: white;
     cursor: pointer;
     font-size: 14px;
 }
-input {
+#controls input {
     cursor: text;
+    min-width: 180px;
 }
 .btn-table {
-    background: #1f73f1;
+    background: linear-gradient(135deg, #6ea7d8, #4f82c2);
     color: white;
     border: none;
+    box-shadow: 0 6px 14px rgba(79, 130, 194, 0.28);
 }
 .btn-table.secondary {
-    background: #f3f6fb;
+    background: #eef3fb;
     color: #1f2a44;
-    border: 1px solid #ccd4e0;
+    border: 1px solid #cfd8e6;
 }
 button:disabled {
     opacity: 0.6;
@@ -364,28 +389,30 @@ button:disabled {
 
 table {
     width: 100%;
-    margin-top: 16px;
+    margin-top: 12px;
     border-collapse: collapse;
-    background: white;
-    border-radius: 12px;
+    background: #ffffff;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(17, 38, 146, 0.08);
+    box-shadow: 0 12px 28px rgba(17, 38, 146, 0.08);
 }
 th,
 td {
-    padding: 10px 12px;
+    padding: 11px 12px;
     text-align: left;
-    border-bottom: 1px solid #eef1f6;
+    border-bottom: 1px solid #edf1f7;
     font-size: 14px;
+    color: #1f2a44;
 }
 th {
-    background: #e9f2ff;
+    background: #e7eef8;
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
+    font-weight: 600;
 }
 tr:hover {
-    background: #f7fbff;
+    background: #f5f8ff;
 }
 .pill {
     display: inline-block;
@@ -393,7 +420,7 @@ tr:hover {
     border-radius: 12px;
     font-weight: 600;
     color: white;
-    min-width: 40px;
+    min-width: 42px;
     text-align: center;
 }
 .pill.g { background:#3cb371; }
@@ -405,45 +432,79 @@ tr:hover {
     color: #4a5a72;
     font-size: 13px;
 }
-    /* 按鈕 */
-.aqi-toggle-btn {
-margin: 12px 0;
-padding: 8px 12px;
-border-radius: 6px;
-border: none;
-background: #1f75fe;
-color: white;
-cursor: pointer;
-font-size: 16px;
+
+.aqi-scale-toggle-wrapper {
+  position: relative;
+  max-width: 760px;
+  margin: 24px auto 0;  
+  height: 1px;           
 }
 
-/* 外層容器：預設收起 */
+/* 透明置中浮動 Toggle 按鈕 */
+.aqi-toggle-transparent {
+  position: absolute;
+  left: 50%;
+  top: -12px;               
+  transform: translateX(-50%);
+
+  z-index: 999;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.01);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #555;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+.aqi-toggle-transparent:hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.aqi-toggle-transparent svg {
+  display: block;
+}
+
+/* 外層容器 */
 .aqi-scale-container {
 max-height: 0;
 overflow: hidden;
 transition: max-height 0.4s ease;
+position: relative;    
+max-width: 760px;
+margin: 48px auto 0; 
 }
 
 /* 展開狀態 */
 .aqi-scale-container.open {
-max-height: 500px; /* 足夠放內容即可 */
+max-height: 500px;
 }
 .section-title-row {
 display: flex;
 align-items: center;
 justify-content: flex-start;
-margin-bottom: 12px;
+margin-bottom: 28px;
 }
 
 .section-title {
 font-size: 18px;
 font-weight: 600;
-color: #1f2a44;
+color: #2f4d71;
 }
 
 .pollutant-grid {
 display: grid;
-gap: 16px;
+gap: 28px;
 grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
@@ -460,7 +521,7 @@ justify-content: space-between;
 
 /* 不同底色（類似圖上的淡黃、淡綠） */
 .card-yellow {
-background: #fff7ea;
+background: #fffaf0;
 }
 
 .card-green {
@@ -500,8 +561,8 @@ color: #15803d;
 }
 
 .badge-moderate {
-background: #fff3e0;
-color: #c05621;
+background: #f2c66d;
+color: #8a5a14;
 }
 
 /* 數值列 */
@@ -540,7 +601,7 @@ border-radius: inherit;
 }
 
 .bar-yellow {
-background: #d98c1f;
+background: #eab45a;
 }
 
 .bar-green {
@@ -610,6 +671,120 @@ font-size: 12px;
 color: #666;
 }
 
+/* === BreezyDay table restyle overrides === */
+.table-wrapper {
+  margin-top: 28px;
+  background: #f8fbff;
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 8px 22px rgba(84, 116, 152, 0.16);
+}
+.table-wrapper header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.table-wrapper h1 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.4px;
+  color: #1f2a44;
+}
+#controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+}
+#controls input,
+#controls select,
+#controls button {
+  padding: 8px 10px;
+  border: 1px solid #ccd4e0;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+#controls input {
+  cursor: text;
+  min-width: 180px;
+}
+.btn-table {
+  background: linear-gradient(135deg, #6ea7d8, #4f82c2);
+  color: white;
+  border: none;
+  box-shadow: 0 6px 14px rgba(79, 130, 194, 0.28);
+}
+.btn-table.secondary {
+  background: #eef3fb;
+  color: #1f2a44;
+  border: 1px solid #cfd8e6;
+}
+table {
+  width: 100%;
+  margin-top: 12px;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(17, 38, 146, 0.08);
+}
+th,
+td {
+  padding: 11px 12px;
+  text-align: left;
+  border-bottom: 1px solid #edf1f7;
+  font-size: 14px;
+  color: #1f2a44;
+}
+th {
+  background: #e7eef8;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  font-weight: 600;
+}
+tr:hover {
+  background: #f5f8ff;
+}
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: white;
+  min-width: 42px;
+  text-align: center;
+}
+.pill.g { background:#3cb371; }
+.pill.m { background:#f5a623; }
+.pill.u { background:#e94f37; }
+
+#status {
+  margin-top: 8px;
+  color: #4a5a72;
+  font-size: 13px;
+}
+.table-back {
+  background: none;
+  border: none;
+  color: #355d7f;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.table-back:hover {
+  text-decoration: underline;
+}
+
 
 .topbar-back-btn {
   display: inline-flex;
@@ -632,4 +807,41 @@ color: #666;
 
 .topbar-back-icon {
   font-size: 16px;
+}
+
+
+.city-controls {
+  margin-top: 36px; /* 與標題保持呼吸感 */
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.city-btn {
+  padding: 7px 14px;       /* 更輕更細 */
+  border-radius: 12px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.22s ease;
+}
+
+/* 更透明、更輕的玻璃 */
+.city-btn.glass {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #1f2a44;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+/* hover = 小小亮，但不搶戲 */
+.city-btn.glass:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.35);
 }
