@@ -110,10 +110,7 @@ export default function App() {
         )}
 
         {page === "profile" && (
-          <ProfilePage
-            onBack={() => go("dashboard")}
-            onViewFeedback={() => go("feedbackHistory")}
-          />
+          <ProfilePage/>
         )}
 
         {page === "feedback" && (
