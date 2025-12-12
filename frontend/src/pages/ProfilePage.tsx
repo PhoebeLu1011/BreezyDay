@@ -4,6 +4,10 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/ProfilePage.css";
 import { UserIcon } from "@heroicons/react/24/outline";
 
+const rawBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = String(rawBase).replace(/\/$/, "");
+const PROFILE_URL = `${API_BASE_URL}/api/profile`;
+
 type Profile = {
   username: string;
   email: string;
@@ -17,7 +21,7 @@ type ProfilePageProps = {
   onViewFeedback?: () => void;
 };
 
-export default function ProfilePage({}: ProfilePageProps) {
+export default function ProfilePage({ onBack, onViewFeedback }: ProfilePageProps) {
   const { token, user } = useAuth();
 
   const [profile, setProfile] = useState<Profile>({
@@ -31,15 +35,23 @@ export default function ProfilePage({}: ProfilePageProps) {
   const [newStyle, setNewStyle] = useState("");
   const [geminiKey, setGeminiKey] = useState("");
 
-  // ---------- 讀取資料 ----------
+  // ---------- 讀取 Profile ----------
   useEffect(() => {
     if (!token) return;
 
-    fetch("http://localhost:5000/api/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
+    (async () => {
+      try {
+        const r = await fetch(PROFILE_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`GET ${PROFILE_URL} -> ${r.status} ${text}`);
+        }
+
+        const data = await r.json();
+
         setProfile((prev) => ({
           ...prev,
           ...data,
@@ -48,18 +60,16 @@ export default function ProfilePage({}: ProfilePageProps) {
           dateOfBirth: data.dateOfBirth ?? prev.dateOfBirth ?? "",
           preferredStyles: data.preferredStyles ?? prev.preferredStyles ?? [],
         }));
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Failed to load profile:", err);
-      });
+      }
+    })();
   }, [token, user]);
 
-  // 讀本機 Gemini key
+  // ---------- 讀本機 Gemini key ----------
   useEffect(() => {
     const saved = localStorage.getItem("geminiApiKey");
-    if (saved) {
-      setGeminiKey(saved);
-    }
+    if (saved) setGeminiKey(saved);
   }, []);
 
   // ---------- style tag ----------
@@ -72,47 +82,63 @@ export default function ProfilePage({}: ProfilePageProps) {
       return;
     }
 
-    setProfile({
-      ...profile,
-      preferredStyles: [...profile.preferredStyles, trimmed],
-    });
+    setProfile((prev) => ({
+      ...prev,
+      preferredStyles: [...prev.preferredStyles, trimmed],
+    }));
     setNewStyle("");
   };
 
   const removeStyle = (tag: string) => {
-    setProfile({
-      ...profile,
-      preferredStyles: profile.preferredStyles.filter((s) => s !== tag),
-    });
+    setProfile((prev) => ({
+      ...prev,
+      preferredStyles: prev.preferredStyles.filter((s) => s !== tag),
+    }));
   };
 
-  const handleNewStyleKeyDown = (
-    e: KeyboardEvent<HTMLInputElement>
-  ) => {
+  const handleNewStyleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       addStyle();
     }
   };
 
-  // ---------- 儲存 ----------
-  const saveProfile = () => {
-    fetch("http://localhost:5000/api/profile", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(profile),
-    })
-      .then((r) => r.json())
-      .then(() => alert("Profile updated!"))
-      .catch((err) => {
-        console.error(err);
-        alert("Failed to update profile.");
+  // ---------- 儲存 Profile ----------
+  const saveProfile = async () => {
+    if (!token) {
+      alert("Please login again.");
+      return;
+    }
+
+    try {
+      const r = await fetch(PROFILE_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(profile),
       });
+
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(`PUT ${PROFILE_URL} -> ${r.status} ${text}`);
+      }
+
+      try {
+        await r.json();
+      } catch {
+        // ignore non-json
+      }
+
+      alert("Profile updated!");
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      alert("Failed to update profile.");
+    }
   };
 
+  // ---------- 儲存 Gemini key (local only) ----------
   const saveGeminiKeyLocal = () => {
     const trimmed = geminiKey.trim();
     localStorage.setItem("geminiApiKey", trimmed);
@@ -122,6 +148,22 @@ export default function ProfilePage({}: ProfilePageProps) {
   return (
     <div className="profile-page">
       <div className="profile-shell">
+        {/* Optional top actions (if you want) */}
+        {(onBack || onViewFeedback) && (
+          <div className="profile-top-actions" style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+            {onBack && (
+              <button type="button" className="btn-ghost" onClick={onBack}>
+                ← Back
+              </button>
+            )}
+            {onViewFeedback && (
+              <button type="button" className="btn-ghost" onClick={onViewFeedback}>
+                View Feedback
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Main Card */}
         <div className="profile-card">
           {/* Card header */}
@@ -146,7 +188,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                 className="form-input"
                 value={profile.username}
                 onChange={(e) =>
-                  setProfile({ ...profile, username: e.target.value })
+                  setProfile((prev) => ({ ...prev, username: e.target.value }))
                 }
                 placeholder="Enter your username"
               />
@@ -163,7 +205,7 @@ export default function ProfilePage({}: ProfilePageProps) {
               <div className="form-helper">Email cannot be changed</div>
             </div>
 
-            {/* Gender */}
+            {/* Gender + DOB */}
             <div className="form-field form-field-inline">
               <div>
                 <label className="form-label">Gender</label>
@@ -171,7 +213,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                   className="form-input"
                   value={profile.gender}
                   onChange={(e) =>
-                    setProfile({ ...profile, gender: e.target.value })
+                    setProfile((prev) => ({ ...prev, gender: e.target.value }))
                   }
                 >
                   <option value="Female">Female</option>
@@ -180,7 +222,6 @@ export default function ProfilePage({}: ProfilePageProps) {
                 </select>
               </div>
 
-              {/* DOB */}
               <div>
                 <label className="form-label">Date of Birth</label>
                 <input
@@ -188,7 +229,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                   className="form-input"
                   value={profile.dateOfBirth}
                   onChange={(e) =>
-                    setProfile({ ...profile, dateOfBirth: e.target.value })
+                    setProfile((prev) => ({ ...prev, dateOfBirth: e.target.value }))
                   }
                 />
               </div>
@@ -212,20 +253,14 @@ export default function ProfilePage({}: ProfilePageProps) {
                   onChange={(e) => setNewStyle(e.target.value)}
                   onKeyDown={handleNewStyleKeyDown}
                 />
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  onClick={addStyle}
-                >
+                <button type="button" className="btn-ghost" onClick={addStyle}>
                   Add
                 </button>
               </div>
 
               <div className="style-tags">
                 {profile.preferredStyles.length === 0 && (
-                  <div className="style-tags-empty">
-                    Your style tags will appear here.
-                  </div>
+                  <div className="style-tags-empty">Your style tags will appear here.</div>
                 )}
 
                 {profile.preferredStyles.map((s) => (
@@ -255,8 +290,7 @@ export default function ProfilePage({}: ProfilePageProps) {
           <div className="ai-settings-block">
             <h2 className="ai-settings-title">AI Settings</h2>
             <p className="ai-settings-subtitle">
-              Store your Gemini API key locally to enable personalized
-              allergy tips and outfit suggestions.
+              Store your Gemini API key locally to enable personalized allergy tips and outfit suggestions.
             </p>
 
             <div className="form-field">
@@ -269,8 +303,7 @@ export default function ProfilePage({}: ProfilePageProps) {
                 placeholder="Paste your Gemini API key here"
               />
               <div className="form-helper">
-                This key is saved only on this device and is never stored in
-                our database.
+                This key is saved only on this device and is never stored in our database.
               </div>
             </div>
 

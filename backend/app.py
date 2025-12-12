@@ -304,7 +304,7 @@ def get_today_temp_range():
     loc = locs[0]
     weather_elements = loc.get("weatherElement", [])
 
-    # 小工具：依 elementName 找該項
+    # 依 elementName 找該項
     def pick_element(name: str):
         for el in weather_elements:
             if el.get("elementName") == name:
@@ -355,7 +355,7 @@ def get_today_temp_range():
         "maxTemp": max_temp,
         "minTemp": min_temp,
         "tempDiff": temp_diff,
-        "pop12h": pop12h,          # 降雨機率（百分比）
+        "pop12h": pop12h,        
         "weatherDesc": wx_str,     # 天氣敘述文字
     })
 
@@ -408,7 +408,7 @@ def get_allergy_tips():
     # 是否是使用者按 Refresh
     force_refresh = bool(body.get("forceRefresh"))
     today_str = get_today_str_taipei()
-    max_calls_per_day = 2  # ✅ 每個 user 每天最多打 2 次（1 自動 + 1 refresh）
+    max_calls_per_day = 2  # 每個 user 每天最多打 2 次（1 自動 + 1 refresh）
 
     cache_filter = {
         "userId": oid,
@@ -438,7 +438,7 @@ def get_allergy_tips():
             "refreshLimitReached": True,
         })
 
-    # 3) 真的要打 Gemini：先抓最近 10 筆 feedback
+    # 3) 先抓最近 10 筆 feedback
     cursor = feedback_col.find({"userId": oid}).sort("createdAt", -1).limit(10)
     feedbacks = list(cursor)
 
@@ -549,7 +549,7 @@ def get_outfit_suggestion():
             "refreshLimitReached": True,
         })
 
-    # 3) 真的要打 Gemini：先抓最近 10 筆 feedback
+    # 3) 先抓最近 10 筆 feedback
     cursor = feedback_col.find({"userId": oid}).sort("createdAt", -1).limit(10)
     feedbacks = list(cursor)
 
