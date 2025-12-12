@@ -16,12 +16,9 @@ type Profile = {
   preferredStyles: string[];
 };
 
-type ProfilePageProps = {
-  onBack?: () => void;
-  onViewFeedback?: () => void;
-};
 
-export default function ProfilePage({ onBack, onViewFeedback }: ProfilePageProps) {
+
+export default function ProfilePage() {
   const { token, user } = useAuth();
 
   const [profile, setProfile] = useState<Profile>({
@@ -148,21 +145,6 @@ export default function ProfilePage({ onBack, onViewFeedback }: ProfilePageProps
   return (
     <div className="profile-page">
       <div className="profile-shell">
-        {/* Optional top actions (if you want) */}
-        {(onBack || onViewFeedback) && (
-          <div className="profile-top-actions" style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-            {onBack && (
-              <button type="button" className="btn-ghost" onClick={onBack}>
-                ← Back
-              </button>
-            )}
-            {onViewFeedback && (
-              <button type="button" className="btn-ghost" onClick={onViewFeedback}>
-                View Feedback
-              </button>
-            )}
-          </div>
-        )}
 
         {/* Main Card */}
         <div className="profile-card">
