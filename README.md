@@ -481,7 +481,7 @@ This function combines:
   to generate a well-structured prompt for Gemini.
 
 
-### 3-2. Calling Gemini for Personalized Outfit Suggestions
+
 
 
 
